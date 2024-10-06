@@ -1,7 +1,7 @@
 {
   "name": "react-native-sqlite",
   "version": "1.0.0",
-  "main": "./db/sqlite/sqlite.js",
+  "main": "./index.js",
   "scripts": {
     "build": "powershell -ExecutionPolicy Bypass -Command \"eas build -p android --profile production\"",
     "start": "expo start"
