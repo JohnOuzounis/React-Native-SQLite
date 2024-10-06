@@ -169,7 +169,7 @@ Post.belongsTo({
     - `onDelete`: Specifies the action to be taken when the referenced target model is deleted (`CASCADE` or `SET NULL`).
 
 ```javascript
-Project.belongsTo({
+Project.belongsToMany({
   target: "User",
   options: {
     through: 'UserProject'
