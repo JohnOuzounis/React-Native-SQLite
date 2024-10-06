@@ -1,7 +1,6 @@
 {
   "name": "react-native-sqlite",
   "version": "1.0.0",
-  "main": "expo-router/entry",
   "scripts": {
     "build": "powershell -ExecutionPolicy Bypass -Command \"eas build -p android --profile production\"",
     "start": "expo start"
