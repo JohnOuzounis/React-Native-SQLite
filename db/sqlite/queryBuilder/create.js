@@ -41,16 +41,15 @@ const createConstraints = (model) => {
   const constraints = [];
 
   const { associations } = model;
-  if (!associations) return constraints;
+  if (!associations || !associations.belongsTo) return constraints;
 
-  for (const [, association] of Object.entries(associations)) {
-    association.forEach((element) => {
-      const { foreignKey, target, referenceKey, onDelete, onUpdate } = element;
+  associations.belongsTo.forEach((element) => {
+    const { foreignKey, target, referenceKey, onDelete, onUpdate } = element;
 
-      const constraint = `FOREIGN KEY (${foreignKey}) REFERENCES ${target}(${referenceKey}) ON DELETE ${onDelete} ON UPDATE ${onUpdate}`;
-      constraints.push(constraint);
-    });
-  }
+    const constraint = `FOREIGN KEY (${foreignKey}) REFERENCES ${target}(${referenceKey}) ON DELETE ${onDelete} ON UPDATE ${onUpdate}`;
+    constraints.push(constraint);
+  });
+
   return constraints;
 };
 
