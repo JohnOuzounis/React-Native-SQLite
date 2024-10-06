@@ -37,8 +37,8 @@ const belongsTo = (params) => {
 };
 
 const belongsToMany = (params) => {
-  const { model, targetModel, options = {}, sqlite } = params;
-  targetModel = sqlite.models[targetModel];
+  const { model, target, options = {}, sqlite } = params;
+  const targetModel = sqlite.models[target];
 
   const joinTable =
     options.through || `${model.modelName}_${targetModel.modelName}`;
@@ -67,24 +67,50 @@ const belongsToMany = (params) => {
     [targetKeyName]: {
       type: targetKeyConfig.type,
     },
+    ...options.attributes,
   });
 
   model.associations = model.associations || {};
-  targetModel.associations = targetModel.associations || {};
+  model.associations.belongsToMany = model.associations.belongsToMany || [];
 
-  model.associations.belongsToMany = {
+  targetModel.associations = targetModel.associations || {};
+  targetModel.associations.belongsToMany =
+    targetModel.associations.belongsToMany || [];
+
+  model.associations.belongsToMany.push({
     target: targetModel.modelName,
     through: joinTable,
     sourceKey: sourceKeyName,
     foreignKey: targetKeyName,
-  };
+  });
 
-  targetModel.associations.belongsToMany = {
+  targetModel.associations.belongsToMany.push({
     target: model.modelName,
     through: joinTable,
     sourceKey: targetKeyName,
     foreignKey: sourceKeyName,
-  };
+  });
+
+  sqlite.models[joinTable].associations.belongsTo =
+    sqlite.models[joinTable].associations.belongsTo || [];
+
+  const [sourceReferenceKey] = sourceKey ?? ["id"];
+  sqlite.models[joinTable].associations.belongsTo.push({
+    target: model.modelName,
+    foreignKey: sourceKeyName,
+    referenceKey: sourceReferenceKey,
+    onDelete: options.onDelete || "SET NULL",
+    onUpdate: "CASCADE",
+  });
+
+  const [targetReferenceKey] = targetKey ?? ["id"];
+  sqlite.models[joinTable].associations.belongsTo.push({
+    target: targetModel.modelName,
+    foreignKey: targetKeyName,
+    referenceKey: targetReferenceKey,
+    onDelete: options.onDelete || "SET NULL",
+    onUpdate: "CASCADE",
+  });
 };
 
 export default { belongsTo, belongsToMany };
