@@ -3,12 +3,13 @@ import { Suspense, useEffect, useState } from "react";
 import { DbProvider, useDb } from "../context/DbProvider";
 import { connectToDb } from "../db/connectToDb";
 import { getModels } from "../utils/models";
+import Loader from "../components/loader/Loader";
 
 export default function App() {
   return (
     <View style={styles.container}>
       <Suspense>
-        <DbProvider createDatabase={connectToDb}>
+        <DbProvider createDatabase={connectToDb} fallback={Loader}>
           <View style={styles.main}>
             <Text style={styles.title}>Hello World</Text>
             <Text style={styles.subtitle}>
