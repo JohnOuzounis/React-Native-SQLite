@@ -21,6 +21,9 @@ const models = {
   Test,
 };
 
-User.belongsTo({ target: "Test", options: { onDelete: "CASCADE" } });
+User.belongsToMany({
+  target: "Test",
+  options: { through: "Bobo", onDelete: "CASCADE" },
+});
 
 export default models;
