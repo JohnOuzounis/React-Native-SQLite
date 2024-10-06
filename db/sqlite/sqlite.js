@@ -9,7 +9,7 @@ const sqlite = {
   instance: null,
   datatypes: Object.freeze(datatypes),
   Op: Object.freeze(Op),
-  connnect: async function (name) {
+  connect: async function (name) {
     this.instance = await SQLite.openDatabaseAsync(name);
   },
 
