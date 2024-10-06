@@ -5,11 +5,10 @@ import React, {
   useEffect,
   useCallback,
 } from "react";
-import Loader from "../components/loader/Loader";
 
 const DbContext = createContext(null);
 
-export const DbProvider = ({ createDatabase, children }) => {
+export const DbProvider = ({ createDatabase, fallback, children }) => {
   const [db, setDb] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -23,7 +22,7 @@ export const DbProvider = ({ createDatabase, children }) => {
     initializeDb();
   }, [initializeDb]);
 
-  if (loading) return <Loader message={"Loading..."} />;
+  if (loading) return fallback ? fallback({ message: "Loading..." }) : null;
 
   return <DbContext.Provider value={db}>{children}</DbContext.Provider>;
 };
