@@ -35,9 +35,11 @@
     "url": "https://github.com/JohnOuzounis/React-Native-SQLite.git"
   },
   "files": [
-    "./db/sqlite"
+    "./db/sqlite",
+    "./context/DbProvider.js"
   ],
   "exports": {
-    ".": "./db/sqlite/sqlite.js"
+    ".": "./db/sqlite/sqlite.js",
+    "./DbProvider": "./context/DbProvider.js"
   }
 }
