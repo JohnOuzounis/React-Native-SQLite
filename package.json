@@ -1,6 +1,6 @@
 {
   "name": "react-native-sqlite",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "main": "./db/sqlite/sqlite.js",
   "scripts": {
     "build": "powershell -ExecutionPolicy Bypass -Command \"eas build -p android --profile production\"",
@@ -44,6 +44,6 @@
   ],
   "exports": {
     ".": "./db/sqlite/sqlite.js",
-    "./DbProvider": "./context/DbProvider"
+    "./DbProvider": "./context/DbProvider.js"
   }
 }
