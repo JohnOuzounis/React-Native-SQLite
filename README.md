@@ -1,5 +1,16 @@
 # React Native SQLite ORM Tool Documentation
 
+## Table of Contents
+
+[Introduction](#introduction)
+[Prerequisites](#prerequisites)
+[Install](#add-react-native-sqlite-to-your-project)
+[How-to-Use](#1-creating-an-sqlite-instance)
+[Datatypes](#available-data-types)
+[Operators](#using-operators)
+[Associations](#3-adding-associations)
+[DbProvider](#5-using-the-dbprovider-context)
+
 ## Introduction
 
 This tool provides an ORM-like interface for handling SQLite database queries in React Native applications using JavaScript objects. It simplifies database operations by allowing you to define models, set up associations, and perform queries in an intuitive way.
@@ -41,7 +52,7 @@ First, create an instance of the SQLite helper and connect to your database.
 ### Import the SQLite Helper
 
 ```javascript
-import { createSqlite } from "React-Native-SQLite";
+import { createSqlite } from "react-native-sqlite";
 ```
 
 ### Create and Connect the SQLite Instance
@@ -204,8 +215,8 @@ Use the `DbProvider` context to make the SQLite instance and models available th
 
 ```javascript
 import React from "react";
-import { DbProvider } from "React-Native-SQLite/DbProvider";
-import { createSqlite } from "React-Native-SQLite";
+import { DbProvider } from "react-native-sqlite/context/DbProvider";
+import { createSqlite } from "react-native-sqlite";
 
 const createDatabase = async () => {
   const sqlite = createSqlite();
@@ -244,7 +255,7 @@ In your components, access the database using the `useDb` hook.
 
 ```javascript
 import React, { useEffect, useState } from "react";
-import { useDb } from "React-Native-SQLite/DbProvider";
+import { useDb } from "react-native-sqlite/context/DbProvider";
 
 const UserList = () => {
   const sqlite = useDb();
@@ -365,7 +376,3 @@ try {
   console.error("Error creating user:", error);
 }
 ```
-
-## Additional Documentation
-
-- []()
