@@ -34,3 +34,5 @@ export const useDb = () => {
   }
   return context;
 };
+
+export default { DbProvider, useDb };
