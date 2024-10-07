@@ -1,6 +1,6 @@
 {
   "name": "react-native-sqlite",
-  "version": "1.0.4",
+  "version": "1.0.3",
   "main": "./db/sqlite/sqlite.js",
   "scripts": {
     "build": "powershell -ExecutionPolicy Bypass -Command \"eas build -p android --profile production\"",
@@ -20,6 +20,7 @@
     "react-native-gesture-handler": "~2.16.1",
     "react-native-safe-area-context": "4.10.5",
     "react-native-screens": "3.31.1",
+    "react-native-sqlite": "file:",
     "react-native-web": "~0.19.6"
   },
   "devDependencies": {
@@ -38,10 +39,11 @@
     "url": "https://github.com/JohnOuzounis/React-Native-SQLite.git"
   },
   "files": [
-    "dist"
+    "db/sqlite",
+    "context"
   ],
   "exports": {
-    ".": "./dist/sqlite/sqlite.js",
-    "./DbProvider": "./dist/DbProvider.js"
+    ".": "./db/sqlite/sqlite.js",
+    "./context/DbProvider": "./context/DbProvider.js"
   }
 }
