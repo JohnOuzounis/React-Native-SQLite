@@ -1,7 +1,7 @@
 import builder from "../queryBuilder";
 
 const update = async (params) => {
-  const { model, data, options, sqlite } = params;
+  const { model, data = {}, options = {}, sqlite } = params;
   const updateQuery = builder.update(model, data, options);
   console.log(updateQuery);
 
@@ -9,7 +9,7 @@ const update = async (params) => {
 };
 
 const upsert = async (params) => {
-  const { model, data, options } = params;
+  const { model, data = {}, options = {}, sqlite } = params;
   const upsertQuery = builder.upsert(model, data, options);
   console.log(upsertQuery);
 
