@@ -9,14 +9,15 @@ const generateUpsert = (model, data, options) => {
   const { where } = options;
   const { attributes } = model;
 
+  const columns = { ...data, ...where };
   const conflictColumns = getConflictColumns(attributes);
-  const updateValues = Object.keys(data)
+  const updateValues = Object.keys(columns)
     .map((key) => `${key} = EXCLUDED.${key}`)
     .join(", ");
 
-  const insertQuery = generateInsert(model, data).replace(/;$/, "");
+  const insertQuery = generateInsert(model, columns).replace(/;$/, "");
   const conflictClause = generateConflictClause(conflictColumns);
-  const whereClause = generateWhereClause(where);
+  const whereClause = generateWhereClause(model.modelName, where);
 
   const upsertQuery = `${insertQuery}${conflictClause} DO UPDATE SET ${updateValues}${whereClause};`;
 
