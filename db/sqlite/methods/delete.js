@@ -1,7 +1,7 @@
 import builder from "../queryBuilder";
 
 const destroy = async (params) => {
-  const { model, options, sqlite } = params;
+  const { model, options = {}, sqlite } = params;
   const deleteQuery = builder.delete(model, options);
   console.log(deleteQuery);
 

@@ -317,6 +317,8 @@ const UserList = () => {
   const user = await sqlite.models.User.findOne({
     options: { where: { id: 1 } },
   });
+
+  const user = await sqlite.models.User.findByPk({ pk: "some value" });
   ```
 
 - **Update**
@@ -324,6 +326,11 @@ const UserList = () => {
   ```javascript
   await sqlite.models.User.update({
     data: { email: "newemail@example.com" },
+    options: { where: { id: 1 } },
+  });
+
+  await sqlite.models.User.upsert({
+    data: { value: "example" },
     options: { where: { id: 1 } },
   });
   ```
@@ -373,17 +380,3 @@ db.models.User.findAll({
 - `LTE`: Less than or equal
 - `IN`: In
 - `NOT_IN`: Not in
-
-## Error Handling
-
-Wrap async operations in `try...catch` blocks to handle errors.
-
-```javascript
-try {
-  const user = await sqlite.models.User.create({
-    /* data */
-  });
-} catch (error) {
-  console.error("Error creating user:", error);
-}
-```

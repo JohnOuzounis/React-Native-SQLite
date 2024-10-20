@@ -9,7 +9,7 @@ async function init(params) {
 }
 
 async function create(params) {
-  const { model, data, sqlite } = params;
+  const { model, data = {}, sqlite } = params;
   const insertQuery = builder.insert(model, data);
   console.log(insertQuery);
 
@@ -17,7 +17,7 @@ async function create(params) {
 }
 
 async function bulkCreate(params) {
-  const { model, data, sqlite } = params;
+  const { model, data = [], sqlite } = params;
   const insertQuery = data
     .map((entry) => builder.insert(model, entry))
     .join(" ");
