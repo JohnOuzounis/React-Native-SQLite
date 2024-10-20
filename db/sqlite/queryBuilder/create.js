@@ -7,6 +7,10 @@ const rules = {
     attribute.type === datatypes.INTEGER ? " AUTOINCREMENT" : "",
   allowNull: (attribute) => (attribute.allowNull === false ? " NOT NULL" : ""),
   unique: () => " UNIQUE",
+  check: (attribute, name) =>
+    Array.isArray(attribute.check)
+      ? ` CHECK (${name} IN (${attribute.check.join(", ")}))`
+      : "",
   defaultValue: (attribute) =>
     attribute.defaultValue !== undefined
       ? ` DEFAULT '${attribute.defaultValue}'`
@@ -28,7 +32,7 @@ const createColumns = (model) => {
     let columnDefinition = `${attributeName} ${attributeConfig.type}`;
 
     for (const key of Object.keys(attributeConfig)) {
-      columnDefinition += rules[key]?.(attributeConfig) ?? "";
+      columnDefinition += rules[key]?.(attributeConfig, attributeName) ?? "";
     }
 
     columns.push(columnDefinition);
