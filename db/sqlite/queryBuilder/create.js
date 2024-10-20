@@ -1,4 +1,3 @@
-import { checkModelType } from "../utils";
 import { datatypes } from "../datatypes";
 
 const rules = {
@@ -58,8 +57,6 @@ const createConstraints = (model) => {
 };
 
 const generateCreate = (model, sqlite) => {
-  checkModelType(model);
-
   const columns = createColumns(model);
   const constraints = createConstraints(model);
 
