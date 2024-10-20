@@ -1,4 +1,5 @@
 const queryBuilder = {
+  count: require("./count").default,
   create: require("./create").default,
   insert: require("./insert").default,
   select: require("./select").default,

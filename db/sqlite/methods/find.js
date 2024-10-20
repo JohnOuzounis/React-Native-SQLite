@@ -30,6 +30,4 @@ const findOne = async (params) => {
   return await sqlite.instance.getAllAsync(`${selectQuery}`);
 };
 
-const findAndCountAll = (model, options) => {};
-
 export default { findAll, findByPk, findOne };

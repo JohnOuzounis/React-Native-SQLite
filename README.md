@@ -355,6 +355,7 @@ const UserList = () => {
 - **`order`**: An array specifying the order in which the results should be returned.
 - **`limit`**: A number that specifies the maximum number of records to return from the query.
 - **`offset`**: A number that specifies the number of records to skip before starting to collect the result set.
+- **`as`**: A string that specifies the name of the column in count query.
 
 ### Using Operators
 
