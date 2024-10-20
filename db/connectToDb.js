@@ -1,8 +1,12 @@
 import { sqlite } from "./database";
 
 export const connectToDb = async () => {
-  await sqlite.connect(process.env.EXPO_PUBLIC_DB_NAME);
-  sqlite.sync();
+  try {
+    await sqlite.connect(process.env.EXPO_PUBLIC_DB_NAME);
+    await sqlite.sync();
+  } catch (error) {
+    console.log(error);
+  }
 
   return sqlite;
 };
