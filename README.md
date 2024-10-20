@@ -115,6 +115,17 @@ The `sqlite.datatypes` object provides various data types:
 - `BOOLEAN`
 - `DATE`
 
+You can create an enum using the `check` constraint for example
+
+```javascript
+sqlite.define("Table", {
+  status: {
+    type: sqlite.datatypes.STRING,
+    check: ["WAITING", "COMPLETE"],
+  },
+});
+```
+
 ## 3. Adding Associations
 
 Associations define relationships between models (e.g., one-to-many, many-to-many).
