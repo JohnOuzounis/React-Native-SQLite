@@ -1,42 +1,4 @@
-import { datatypes } from "./datatypes";
 import { Op } from "./operations";
-
-export const checkModelType = (model) => {
-  const invalidTypes = Object.entries(model.attributes).filter(
-    ([attributeName, attribute]) =>
-      !(
-        attribute.hasOwnProperty("type") &&
-        Object.values(datatypes).includes(attribute.type)
-      )
-  );
-
-  if (invalidTypes.length > 0) {
-    throw new Error(
-      `Invalid types in ${model.modelName}: ${invalidTypes
-        .map(
-          ([attributeName, attribute]) => `${attributeName}: ${attribute.type}`
-        )
-        .join(", ")}`
-    );
-  }
-};
-
-export const checkDataKeys = (model, data) => {
-  const dataAttributes = Object.keys(data);
-  const modelAttributes = Object.keys(model.attributes);
-
-  const hasValidKeys = dataAttributes.every((attribute) =>
-    modelAttributes.includes(attribute)
-  );
-
-  if (!hasValidKeys) {
-    throw new Error(
-      `Invalid keys in ${model.modelName} data: ${dataAttributes
-        .filter((attribute) => !modelAttributes.includes(attribute))
-        .join(", ")}`
-    );
-  }
-};
 
 export const generateWhereClause = (modelName, where) => {
   if (!where || Object.keys(where).length === 0) return "";
@@ -104,50 +66,16 @@ export const generateIncludeClause = (modelName, include = []) => {
     .join(" ");
 };
 
-export function buildModelTree(models) {
-  const lookup = {};
-  const allChildren = new Set();
-  const tree = [];
+export const getConflictColumns = (attributes) =>
+  Object.keys(attributes).filter(
+    (attr) => attributes[attr].primaryKey || attributes[attr].unique
+  );
 
-  models.forEach((model) => {
-    lookup[model.modelName] = { name: model.modelName, children: [] };
-  });
+export const generateConflictClause = (conflictColumns) => {
+  const conflictClause =
+    conflictColumns && conflictColumns.length > 0
+      ? ` ON CONFLICT(${conflictColumns.join(", ")})`
+      : "";
 
-  models.forEach((model) => {
-    const { belongsTo } = model.associations;
-    if (belongsTo) {
-      belongsTo.forEach((element) => {
-        const child = lookup[element.target];
-        if (child) {
-          lookup[model.modelName].children.push(child);
-          allChildren.add(child.name);
-        }
-      });
-    }
-
-    tree.push(lookup[model.modelName]);
-  });
-
-  if (tree.some((node) => hasCycle(node))) {
-    throw new Error("Cyclical associations detected");
-  }
-
-  return tree.filter((node) => !allChildren.has(node.name));
-}
-
-function hasCycle(node, visited = new Set()) {
-  if (visited.has(node.name)) {
-    return true;
-  }
-
-  visited.add(node.name);
-
-  for (const child of node.children) {
-    if (hasCycle(child, visited)) {
-      return true;
-    }
-  }
-
-  visited.delete(node.name);
-  return false;
-}
+  return conflictClause;
+};

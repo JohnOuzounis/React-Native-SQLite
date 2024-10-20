@@ -8,8 +8,12 @@ const update = async (params) => {
   await sqlite.instance.execAsync(`${updateQuery}`);
 };
 
-const upsert = (params) => {
+const upsert = async (params) => {
   const { model, data, options } = params;
+  const upsertQuery = builder.upsert(model, data, options);
+  console.log(upsertQuery);
+
+  await sqlite.instance.execAsync(`${upsertQuery}`);
 };
 
 export default { update, upsert };
