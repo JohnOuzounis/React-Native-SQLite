@@ -8,7 +8,8 @@ const getForeignKeyName = (model, options, sqlite) => {
 };
 
 const belongsTo = (params) => {
-  const { model, target, options = {}, sqlite } = params;
+  const { model, args, sqlite } = params;
+  const [target, options = {}] = args;
   const targetModel = sqlite.models[target];
 
   const foreignKey = getForeignKeyName(targetModel, options, sqlite);
@@ -37,7 +38,8 @@ const belongsTo = (params) => {
 };
 
 const belongsToMany = (params) => {
-  const { model, target, options = {}, sqlite } = params;
+  const { model, args, sqlite } = params;
+  const [target, options = {}] = args;
   const targetModel = sqlite.models[target];
 
   const joinTable =

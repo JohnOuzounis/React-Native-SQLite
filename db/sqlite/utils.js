@@ -54,6 +54,12 @@ export const generateOrderByClause = (model, order) => {
     : "";
 };
 
+export const generateGroupByClause = (model, group) => {
+  return group
+    ? ` GROUP BY ${group.map((col) => `'${model}'.'${col}'`).join(", ")}`
+    : "";
+};
+
 export const generateIncludeClause = (modelName, include = []) => {
   if (include.length === 0) return "";
 

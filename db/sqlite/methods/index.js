@@ -11,9 +11,12 @@ export default {
   addMethods: (model, sqlite) => {
     methodsObjs.forEach((methods) => {
       Object.entries(methods).forEach(([name, func]) => {
-        model[name] = async function (params = {}) {
+        model[name] = async function (...args) {
+          // change func signature ({sqlite, model, args}) -> const [arg1, arg2] = args
+          const params = {};
           params.sqlite = sqlite;
           params.model = model;
+          params.args = args;
           return await func(params);
         };
       });

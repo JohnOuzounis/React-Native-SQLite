@@ -171,15 +171,12 @@ Post.belongsTo(User, {
     - `onDelete`: Specifies the action to be taken when the referenced target model is deleted (`CASCADE` or `SET NULL`).
 
 ```javascript
-Post.belongsTo({
-  target: "User",
-  options: {
-    foreignKey: {
-      name: "userId",
-      type: sqlite.datatypes.INTEGER,
-    },
-    onDelete: "CASCADE",
+Post.belongsTo("User", {
+  foreignKey: {
+    name: "userId",
+    type: sqlite.datatypes.INTEGER,
   },
+  onDelete: "CASCADE",
 });
 ```
 
@@ -191,13 +188,11 @@ Post.belongsTo({
     - `onDelete`: Specifies the action to be taken when the referenced target model is deleted (`CASCADE` or `SET NULL`).
 
 ```javascript
-Project.belongsToMany({
-  target: "User",
-  options: {
+Project.belongsToMany( "User", {
     through: 'UserProject'
     onDelete: "CASCADE",
   },
-});
+);
 ```
 
 ### Association Options
@@ -300,13 +295,24 @@ const UserList = () => {
 - **Create**
 
   ```javascript
-  const newUser = await sqlite.models.User.create({
-    data: {
+  await sqlite.models.User.create({
+    username: "johndoe",
+    email: "john@example.com",
+    password: "securepassword",
+  });
+
+  await sqlite.models.User.bulkCreate([
+    {
       username: "johndoe",
       email: "john@example.com",
       password: "securepassword",
     },
-  });
+    {
+      username: "janedoe",
+      email: "jane@example.com",
+      password: "securepassword",
+    },
+  ]);
   ```
 
 - **Read**
@@ -314,31 +320,26 @@ const UserList = () => {
   ```javascript
   const users = await sqlite.models.User.findAll();
 
-  const user = await sqlite.models.User.findOne({
-    options: { where: { id: 1 } },
-  });
+  const user = await sqlite.models.User.findOne({ where: { id: 1 } });
 
-  const user = await sqlite.models.User.findByPk({ pk: "some value" });
+  const user = await sqlite.models.User.findByPk("jane@example.com");
   ```
 
 - **Update**
 
   ```javascript
-  await sqlite.models.User.update({
-    data: { email: "newemail@example.com" },
-    options: { where: { id: 1 } },
-  });
+  await sqlite.models.User.update(
+    { email: "newemail@example.com" },
+    { where: { id: 1 } }
+  );
 
-  await sqlite.models.User.upsert({
-    data: { value: "example" },
-    options: { where: { id: 1 } },
-  });
+  await sqlite.models.User.upsert({ value: "example" }, { where: { id: 1 } });
   ```
 
 - **Delete**
 
   ```javascript
-  await sqlite.models.User.destroy({ options: { where: { id: 1 } } });
+  await sqlite.models.User.destroy({ where: { id: 1 } });
   ```
 
 - **Drop**
@@ -356,6 +357,7 @@ const UserList = () => {
 - **`limit`**: A number that specifies the maximum number of records to return from the query.
 - **`offset`**: A number that specifies the number of records to skip before starting to collect the result set.
 - **`as`**: A string that specifies the name of the column in count query.
+- **`group`**: An array with column names, it is used in count queries
 
 ### Using Operators
 
@@ -363,10 +365,8 @@ Use `sqlite.Op` for complex queries.
 
 ```javascript
 db.models.User.findAll({
-  options: {
-    where: {
-      [db.Op.OR]: [{ status: "active" }, { age: { [Op.gt]: 18 } }],
-    },
+  where: {
+    [db.Op.OR]: [{ status: "active" }, { age: { [Op.gt]: 18 } }],
   },
 });
 ```

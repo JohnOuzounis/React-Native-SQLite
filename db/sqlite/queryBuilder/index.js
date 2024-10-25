@@ -6,6 +6,7 @@ const queryBuilder = {
   update: require("./update").default,
   upsert: require("./upsert").default,
   delete: require("./delete").default,
+  selectCount: require("./selectCount").default,
   drop: require("./drop").default,
 };
 
