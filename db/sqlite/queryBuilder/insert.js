@@ -6,7 +6,7 @@ const generateInsert = (model, data) => {
       if (typeof value === "string") {
         return `'${value.replace(/'/g, "''")}'`;
       }
-      return value;
+      return `'${value}'`;
     })
     .join(", ");
 
