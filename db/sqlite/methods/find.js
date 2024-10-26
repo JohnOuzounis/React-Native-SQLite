@@ -17,11 +17,13 @@ const findByPk = async (params) => {
     ([, attribute]) => attribute.primaryKey === true
   ) || ["id"];
 
-  const where = {
+  options.where = {
     [sourceKey]: pk,
   };
+  const selectQuery = builder.select(model, options);
+  console.log(selectQuery);
 
-  return await findAll({ ...params, args: { ...options, where } });
+  return await sqlite.instance.getAllAsync(`${selectQuery}`);
 };
 
 const findOne = async (params) => {
