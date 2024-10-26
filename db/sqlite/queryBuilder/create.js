@@ -8,7 +8,9 @@ const rules = {
   unique: () => " UNIQUE",
   check: (attribute, name) =>
     Array.isArray(attribute.check)
-      ? ` CHECK (${name} IN (${attribute.check.join(", ")}))`
+      ? ` CHECK (${name} IN (${attribute.check
+          .map((att) => `'${att}'`)
+          .join(", ")}))`
       : "",
   defaultValue: (attribute) =>
     attribute.defaultValue !== undefined

@@ -26,7 +26,7 @@ const sqlite = {
     return sqlite.models[model];
   },
   sync: async function () {
-    this.instance?.withExclusiveTransactionAsync(async () => {
+    return this.instance?.withExclusiveTransactionAsync(async () => {
       await this.instance.execAsync(
         `PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;`
       );
