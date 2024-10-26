@@ -10,7 +10,7 @@ const findAll = async (params) => {
 };
 
 const findByPk = async (params) => {
-  const { model, args } = params;
+  const { model, args, sqlite } = params;
   const [pk, options = {}] = args;
 
   const [sourceKey] = Object.entries(model.attributes).find(
