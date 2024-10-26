@@ -49,7 +49,7 @@ export const generateOffsetClause = (offset) =>
 export const generateOrderByClause = (model, order) => {
   return order
     ? ` ORDER BY ${order
-        .map(([col, dir]) => `'${model}'.'${col}' '${dir}'`)
+        .map(([col, dir]) => `'${model}'.'${col}' ${dir}`)
         .join(", ")}`
     : "";
 };
