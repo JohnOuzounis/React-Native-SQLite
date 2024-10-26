@@ -11,7 +11,7 @@ const findAll = async (params) => {
 
 const findByPk = async (params) => {
   const { model, args } = params;
-  const [pk] = args;
+  const [pk, options = {}] = args;
 
   const [sourceKey] = Object.entries(model.attributes).find(
     ([, attribute]) => attribute.primaryKey === true
@@ -21,7 +21,7 @@ const findByPk = async (params) => {
     [sourceKey]: pk,
   };
 
-  return await findAll({ ...params, options: { where } });
+  return await findAll({ ...params, args: { ...options, where } });
 };
 
 const findOne = async (params) => {
