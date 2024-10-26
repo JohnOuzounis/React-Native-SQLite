@@ -7,7 +7,7 @@ const count = async (params) => {
 
   const countQuery = builder.count(model.modelName, where, as, groupBy);
   const result = await sqlite.instance?.getAllAsync(countQuery);
-  console.log(result, countQuery);
+  console.log(countQuery);
 
   return result?.[0][as] || 0;
 };
