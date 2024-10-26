@@ -38,12 +38,8 @@ const sqlite = {
       );
     });
   },
-  transaction: async function (func) {
-    try {
-      return await this.instance?.withExclusiveTransactionAsync(func);
-    } catch (error) {
-      throw error;
-    }
+  transaction: function (func) {
+    return this.instance?.withExclusiveTransactionAsync(func);
   },
 };
 
