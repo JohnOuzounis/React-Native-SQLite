@@ -43,6 +43,8 @@ const sqlite = {
   },
 };
 
-export const createSqlite = () => {
+const createSqlite = () => {
   return { ...sqlite };
 };
+
+export default createSqlite;
