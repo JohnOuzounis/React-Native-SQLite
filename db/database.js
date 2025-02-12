@@ -1,3 +1,3 @@
-import { createSqlite } from "./sqlite/sqlite";
+import createSqlite from './sqlite/sqlite';
 
 export const sqlite = createSqlite();
