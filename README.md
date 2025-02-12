@@ -24,8 +24,8 @@ This guide covers the following steps:
 
 ## Prerequisites
 
--   **React Native application**
--   **Expo SQLite**: Ensure you have the `expo-sqlite` package installed.
+- **React Native application**
+- **Expo SQLite**: Ensure you have the `expo-sqlite` package installed.
 
 ## Add React-Native-SQLite to your project
 
@@ -75,9 +75,12 @@ Models represent tables in your database. Use the `define` method to create mode
 const ModelName = sqlite.define('ModelName', attributes, options);
 ```
 
--   **`ModelName`**: String representing the name of your model/table.
--   **`attributes`**: Object defining the columns and their data types.
--   **`options`**: (Optional) Additional model configurations.
+- **`ModelName`**: String representing the name of your model/table.
+- **`attributes`**: Object defining the columns and their data types.
+- **`options`**: (Optional) Additional model configurations.
+    1. `timestamps`: add `createdAt` and `updatedAt` columns to your table
+    2. `localtime`: timestamps use local timezone instead of UTC
+    3. `paranoid`: add `deletedAt` timestamp
 
 ### Example
 
@@ -109,11 +112,11 @@ const User = sqlite.define('User', {
 
 The `sqlite.datatypes` object provides various data types:
 
--   `STRING`
--   `INTEGER`
--   `FLOAT`
--   `BOOLEAN`
--   `DATE`
+- `STRING`
+- `INTEGER`
+- `FLOAT`
+- `BOOLEAN`
+- `DATE`
 
 You can create an enum using the `check` constraint for example
 
@@ -161,14 +164,14 @@ Post.belongsTo(User, {
 
 ### Association Methods
 
--   **`belongsTo`**: Defines a many-to-one relationship or a one-to-one relationship. This will add a foreign key to the source model.
+- **`belongsTo`**: Defines a many-to-one relationship or a one-to-one relationship. This will add a foreign key to the source model.
 
-    -   `target`: A string representing the name of the target model to which the source model belongs.
-    -   `options`: An object that contains options for defining the relationship.
-        -   `foreignKey`: An object specifying the foreign key settings. If not provided, the system will automatically use the format tableNameId.
-            -   `name`: A string to specify a custom name for the foreign key column.
-            -   `type`: The data type of the foreign key column (e.g., `sqlite.datatypes.INTEGER`).
-        -   `onDelete`: Specifies the action to be taken when the referenced target model is deleted (`CASCADE` or `SET NULL`).
+    - `target`: A string representing the name of the target model to which the source model belongs.
+    - `options`: An object that contains options for defining the relationship.
+        - `foreignKey`: An object specifying the foreign key settings. If not provided, the system will automatically use the format tableNameId.
+            - `name`: A string to specify a custom name for the foreign key column.
+            - `type`: The data type of the foreign key column (e.g., `sqlite.datatypes.INTEGER`).
+        - `onDelete`: Specifies the action to be taken when the referenced target model is deleted (`CASCADE` or `SET NULL`).
 
 ```javascript
 Post.belongsTo('User', {
@@ -180,12 +183,12 @@ Post.belongsTo('User', {
 });
 ```
 
--   **`belongsToMany`**: Defines a many-to-many relationship and creates a joint table. The joint table will contain the primary keys of the two tables or `sourceModelId` and `TargetModelId`. It is highly recommended to define the joint model and use the belongsTo association.
-    -   `target`: A string representing the name of the target model to which the source model belongs.
-    -   `options`: An object that contains options for defining the relationship.
-        -   `through`: A string representing the name of the joint table. If not provided `sourceModel_targetModel` will be used.
-        -   `attributes`: An object with additional attributes for the joint table.
-        -   `onDelete`: Specifies the action to be taken when the referenced target model is deleted (`CASCADE` or `SET NULL`).
+- **`belongsToMany`**: Defines a many-to-many relationship and creates a joint table. The joint table will contain the primary keys of the two tables or `sourceModelId` and `TargetModelId`. It is highly recommended to define the joint model and use the belongsTo association.
+    - `target`: A string representing the name of the target model to which the source model belongs.
+    - `options`: An object that contains options for defining the relationship.
+        - `through`: A string representing the name of the joint table. If not provided `sourceModel_targetModel` will be used.
+        - `attributes`: An object with additional attributes for the joint table.
+        - `onDelete`: Specifies the action to be taken when the referenced target model is deleted (`CASCADE` or `SET NULL`).
 
 ```javascript
 Project.belongsToMany( "User", {
@@ -197,7 +200,7 @@ Project.belongsToMany( "User", {
 
 ### Association Options
 
--   **`foreignKey`**: The foreign key in the target model.
+- **`foreignKey`**: The foreign key in the target model.
 
 ## 4. Synchronizing Models
 
@@ -226,7 +229,7 @@ import { createSqlite } from 'react-native-sqlite';
 
 const createDatabase = async () => {
     const sqlite = createSqlite();
-    await sqlite.connnect('my_database_name.db');
+    await sqlite.connect('my_database_name.db');
 
     // Define models
     const User = sqlite.define('User', {
@@ -252,8 +255,8 @@ const App = () => (
 );
 ```
 
--   **`createDatabase`**: Async function that initializes the database.
--   **`fallback`**: Component displayed while the database is loading.
+- **`createDatabase`**: Async function that initializes the database.
+- **`fallback`**: Component displayed while the database is loading.
 
 ### Accessing the Database with `useDb`
 
@@ -292,7 +295,7 @@ const UserList = () => {
 
 ### CRUD Operations
 
--   **Create**
+- **Create**
 
     ```javascript
     await sqlite.models.User.create({
@@ -315,7 +318,7 @@ const UserList = () => {
     ]);
     ```
 
--   **Read**
+- **Read**
 
     ```javascript
     const users = await sqlite.models.User.findAll();
@@ -325,7 +328,7 @@ const UserList = () => {
     const user = await sqlite.models.User.findByPk('jane@example.com');
     ```
 
--   **Update**
+- **Update**
 
     ```javascript
     await sqlite.models.User.update(
@@ -336,28 +339,63 @@ const UserList = () => {
     await sqlite.models.User.upsert({ value: 'example' }, { where: { id: 1 } });
     ```
 
--   **Delete**
+- **Delete**
 
     ```javascript
     await sqlite.models.User.destroy({ where: { id: 1 } });
     ```
 
--   **Drop**
+- **Drop**
 
     ```javascript
     await sqlite.models.User.drop();
     ```
 
+- **Aggregate Functions**
+
+Supported aggregate functions:
+
+- `NOW`
+- `COUNT`
+- `SUM`
+- `AVG`
+- `MAX`
+- `MIN`
+- `UPPER`
+- `LOWER`
+- `LENGTH`
+- `DATE`
+- `TIME`
+- `STRFTIME`
+
+```javascript
+const User = sqlite.define('User', {
+  age: {
+    type: sqlite.datatypes.INTEGER
+  },
+  salary: {
+    type: sqlite.datatypes.INTEGER
+  }
+});
+
+sqlite.models.User.findAll({
+  attributes:[sqlite.fn('AVG', 'salary'), 'avg_salary']
+  where: {
+    age: { [Op.gt]: 18 }
+  },
+});
+```
+
 ### Query Options
 
--   **`where`**: Object specifying query conditions.
--   **`attributes`**: Array of attributes to retrieve.
--   **`include`**: Array of associated models to include.
--   **`order`**: An array specifying the order in which the results should be returned.
--   **`limit`**: A number that specifies the maximum number of records to return from the query.
--   **`offset`**: A number that specifies the number of records to skip before starting to collect the result set.
--   **`as`**: A string that specifies the name of the column in count query.
--   **`group`**: An array with column names, it is used in count queries
+- **`where`**: Object specifying query conditions.
+- **`attributes`**: Array of attributes to retrieve.
+- **`include`**: Array of associated models to include.
+- **`order`**: An array specifying the order in which the results should be returned.
+- **`limit`**: A number that specifies the maximum number of records to return from the query.
+- **`offset`**: A number that specifies the number of records to skip before starting to collect the result set.
+- **`as`**: A string that specifies the name of the column in count query.
+- **`group`**: An array with column names, it is used in count queries
 
 ### Using Operators
 
@@ -373,33 +411,63 @@ db.models.User.findAll({
 
 **Available Operators** (from `sqlite.Op`):
 
--   `EQ`: Equal
--   `NE`: Not equal
--   `GT`: Greater than
--   `GTE`: Greater than or equal
--   `LT`: Less than
--   `LTE`: Less than or equal
--   `IN`: In
--   `NOT_IN`: Not in
+- `EQ`: Equal
+- `NE`: Not equal
+- `GT`: Greater than
+- `GTE`: Greater than or equal
+- `LT`: Less than
+- `LTE`: Less than or equal
+- `IN`: In
+- `NOT_IN`: Not in
+- `IS`: (can be used for null check)
 
-**Aggregate Functions**
+## Migrations
 
-Add aggregate functions like `SUM` or `AVG`.
+Database migrations help you manage and apply changes to your database schema in a structured and version-controlled way. You should define your models and their associations alongside corresponding migration files. Use the `sqlite.migrate` and `sqlite.migrateUndo` methods to execute or undo migrations
+
+### API Reference
+
+The `queryInterface` provides methods for database schema changes such as creating, modifying, and deleting tables, columns, and constraints.
+
+**Available Methods**
+
+- createTable
+- dropTable
+
+### Define migrations
+
+Each migration file should follow a structured format with up (apply changes) and down (revert changes) methods.
 
 ```javascript
-const User = sqlite.define('User', {
-  age: {
-    type: sqlite.datatypes.INTEGER
-  },
-  salary: {
-    type: sqlite.datatypes.INTEGER
-  }
-});
-
-db.models.User.findAll({
-  attributes:[['AVG', 'salary'], 'avg_salary']
-  where: {
-    age: { [Op.gt]: 18 }
-  },
-});
+const createUser = {
+    name: '001_create_users',
+    up: async (queryInterface, sqlite) => {
+        await queryInterface.createTable('Users', {
+            id: {
+                type: sqlite.datatypes.INTEGER,
+                primaryKey: true,
+                autoIncrement: true,
+                allowNull: false,
+            },
+            username: {
+                type: sqlite.datatypes.STRING,
+                allowNull: false,
+                unique: true,
+            },
+            createdAt: {
+                type: sqlite.datatypes.DATE,
+                defaultValue: sqlite.fn('NOW'),
+                allowNull: false,
+            },
+            updatedAt: {
+                type: sqlite.datatypes.DATE,
+                defaultValue: sqlite.fn('NOW'),
+                allowNull: false,
+            },
+        });
+    },
+    down: async (queryInterface, sqlite) => {
+        await queryInterface.dropTable('Users');
+    },
+};
 ```
