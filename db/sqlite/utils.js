@@ -1,14 +1,24 @@
 import { Op } from './operations';
 
+const parseValue = value => {
+    if (typeof value === 'string') {
+        return `'${value.replace(/'/g, "''")}'`;
+    }
+    if (value instanceof Date) {
+        return `'${value.toISOString()}'`;
+    }
+    return value;
+};
+
 export const generateColumns = attributes => {
     if (!attributes || attributes.length <= 0) return '*';
 
     const columns = attributes
         .map(attr => {
             if (Array.isArray(attr)) {
-                const [func, col] = attr[0];
+                const func = attr[0];
                 const alias = attr[1];
-                return `${func}(${col}) AS ${alias}`;
+                return `${func} AS ${alias}`;
             }
             return attr;
         })
@@ -22,23 +32,23 @@ export const generateWhereClause = (modelName, where) => {
 
     const buildCondition = ([key, condition]) => {
         if (Array.isArray(condition)) {
-            const values = condition.map(v => `'${v}'`).join(', ');
+            const values = condition.map(parseValue).join(', ');
             return `'${modelName}'.'${key}' ${Op.IN} (${values})`;
         }
 
         if (typeof condition === 'object' && condition !== null) {
             const clauses = Object.entries(condition).map(([op, value]) => {
                 if (Array.isArray(value)) {
-                    const values = value.map(v => `'${v}'`).join(', ');
+                    const values = value.map(parseValue).join(', ');
                     return `'${modelName}'.'${key}' ${op} (${values})`;
                 }
 
-                return `'${modelName}'.'${key}' ${op} '${value}'`;
+                return `'${modelName}'.'${key}' ${op} ${parseValue(value)}`;
             });
             return clauses.join(' AND ');
         }
 
-        return `'${modelName}'.'${key}' ${Op.EQ} '${condition}'`;
+        return `'${modelName}'.'${key}' ${Op.EQ} ${parseValue(condition)}`;
     };
 
     const buildClause = where => {

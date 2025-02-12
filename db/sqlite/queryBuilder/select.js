@@ -1,3 +1,4 @@
+import { Op } from '../operations';
 import {
     generateColumns,
     generateIncludeClause,
@@ -12,7 +13,11 @@ const generateSelect = (model, options) => {
 
     const columns = generateColumns(attributes);
 
-    const whereClause = generateWhereClause(model.modelName, where);
+    const whereOptions = model.paranoid
+        ? { ...where, deletedAt: { [Op.IS]: null } }
+        : where;
+
+    const whereClause = generateWhereClause(model.modelName, whereOptions);
     const limitClause = generateLimitClause(limit);
     const offsetClause = generateOffsetClause(offset);
     const orderbyClause = generateOrderByClause(model.modelName, order);
