@@ -2,6 +2,9 @@ import { generateWhereClause } from '../utils';
 
 export const generateUpdate = (model, data, options) => {
     const { where } = options;
+    const whereOptions = model.paranoid
+        ? { ...where, deletedAt: { [Op.IS]: null } }
+        : where;
 
     if (model.timestamps) {
         data.updatedAt = {
@@ -9,7 +12,7 @@ export const generateUpdate = (model, data, options) => {
         };
     }
 
-    const whereClause = generateWhereClause(model.modelName, where);
+    const whereClause = generateWhereClause(model.modelName, whereOptions);
     const columns = Object.entries(data)
         .map(([name, value]) => {
             if (typeof value === 'string') {
