@@ -431,8 +431,25 @@ The `queryInterface` provides methods for database schema changes such as creati
 
 **Available Methods**
 
-- createTable
-- dropTable
+- `createTable`
+- `dropTable`
+- `addColumn`
+- `dropColumn`
+- `renameTable`
+- `renameColumn`
+
+**Unsupported Methods**
+
+- `changeColumn`
+- `addConstraint`
+- `dropConstraint`
+
+    To work around unsupported methods you can do the following in your migration:
+
+    1. Define a new table with the changed column or new constraints (example: `new_users`)
+    2. copy old table into new (get all `users` and add to `new_users`)
+    3. Drop old table
+    4. Rename new table (`new_users` -> `users`)
 
 ### Define migrations
 
