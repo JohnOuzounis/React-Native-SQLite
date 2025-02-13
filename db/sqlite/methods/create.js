@@ -22,7 +22,7 @@ async function bulkCreate(params) {
     const { model, args, sqlite } = params;
     const [data = []] = args;
     const insertQuery = data
-        .map(entry => builder.insert(model, entry))
+        .map(entry => builder.insert(model, entry, sqlite))
         .join(' ');
     logger.log(insertQuery);
 
