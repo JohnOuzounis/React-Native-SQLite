@@ -108,7 +108,6 @@ const sqlite = {
             try {
                 logger.log('Running up migrations...');
                 for (const migration of orderedMigrations) {
-                    logger.log(migration.name);
                     logger.active = false;
 
                     const exists = await this.models.Migrations.findAll({
@@ -121,7 +120,9 @@ const sqlite = {
                     await this.models.Migrations.create({
                         name: migration.name,
                     });
+
                     logger.active = true;
+                    logger.log(migration.name);
                 }
                 logger.log('Migration successfull!');
             } catch (error) {
@@ -143,7 +144,6 @@ const sqlite = {
             try {
                 logger.log('Running down migrations...');
                 for (const migration of orderedMigrations) {
-                    logger.log(migration.name);
                     logger.active = false;
 
                     const exists = await this.models.Migrations.findAll({
@@ -158,7 +158,9 @@ const sqlite = {
                             name: migration.name,
                         },
                     });
+
                     logger.active = true;
+                    logger.log(migration.name);
                 }
                 logger.log('Migration successfull!');
             } catch (error) {
