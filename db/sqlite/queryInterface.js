@@ -82,10 +82,15 @@ const queryInterfaceMethods = {
         throw Error('Not implemented yet!');
     },
 
-    bulkInsert: async ({ sqlite, args }) => {
-        // Logic for bulk insert
-        const [tableName, records] = args;
-        throw Error('Not implemented yet!');
+    bulkCreate: async ({ sqlite, args }) => {
+        const [modelName, records] = args;
+        const insertQuery = records
+            .map(entry => queryBuilder.insert({ modelName }, entry, sqlite))
+            .join(' ');
+
+        await sqlite.instance.withExclusiveTransactionAsync(async () => {
+            await sqlite.instance.execAsync(`${insertQuery}`);
+        });
     },
 
     bulkUpdate: async ({ sqlite, args }) => {
@@ -94,10 +99,11 @@ const queryInterfaceMethods = {
         throw Error('Not implemented yet!');
     },
 
-    bulkDelete: async ({ sqlite, args }) => {
-        // Logic to delete records in bulk
-        const [tableName, where] = args;
-        throw Error('Not implemented yet!');
+    bulkDestroy: async ({ sqlite, args }) => {
+        const [modelName, options] = args;
+        const deleteQuery = queryBuilder.delete({ modelName }, options);
+
+        await sqlite.instance.execAsync(`${deleteQuery}`);
     },
 };
 

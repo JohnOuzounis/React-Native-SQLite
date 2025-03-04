@@ -19,8 +19,18 @@ const sqlite = {
                 type: this.datatypes.STRING,
             },
         });
+        this.define('Seeders', {
+            name: {
+                type: this.datatypes.STRING,
+            },
+        });
+
         await this.models.Migrations.init({
             model: this.models.Migrations,
+            sqlite: this,
+        });
+        await this.models.Seeders.init({
+            model: this.models.Seeders,
             sqlite: this,
         });
 
@@ -124,6 +134,7 @@ const sqlite = {
                     logger.active = true;
                     logger.log(migration.name);
                 }
+                logger.active = true;
                 logger.log('Migration successfull!');
             } catch (error) {
                 logger.active = true;
@@ -162,10 +173,87 @@ const sqlite = {
                     logger.active = true;
                     logger.log(migration.name);
                 }
+                logger.active = true;
                 logger.log('Migration successfull!');
             } catch (error) {
                 logger.active = true;
                 logger.log('Error running migrations');
+                throw error;
+            }
+        });
+    },
+    seed: function (seeders) {
+        return this.instance?.withExclusiveTransactionAsync(async () => {
+            if (!seeders) return;
+
+            const queryInterface = createInterface(this);
+            const orderedSeeders = seeders.sort((a, b) =>
+                a.name.localeCompare(b.name)
+            );
+
+            try {
+                logger.log('Running up seeders...');
+                for (const seeder of orderedSeeders) {
+                    logger.active = false;
+
+                    const exists = await this.models.Seeders.findAll({
+                        where: { name: seeder.name },
+                    });
+
+                    if (exists.length !== 0) continue;
+
+                    await seeder.up(queryInterface, this);
+                    await this.models.Seeders.create({
+                        name: seeder.name,
+                    });
+
+                    logger.active = true;
+                    logger.log(seeder.name);
+                }
+                logger.active = true;
+                logger.log('Seeding successfull!');
+            } catch (error) {
+                logger.active = true;
+                logger.log('Error running seeders');
+                throw error;
+            }
+        });
+    },
+    seedUndo: function (seeders) {
+        return this.instance?.withExclusiveTransactionAsync(async () => {
+            if (!seeders) return;
+
+            const queryInterface = createInterface(this);
+            const orderedSeeders = seeders.sort((a, b) =>
+                b.name.localeCompare(a.name)
+            );
+
+            try {
+                logger.log('Running down seeders...');
+                for (const seeder of orderedSeeders) {
+                    logger.active = false;
+
+                    const exists = await this.models.Seeders.findAll({
+                        where: { name: seeder.name },
+                    });
+
+                    if (exists.length === 0) continue;
+
+                    await seeder.down(queryInterface, this);
+                    await this.models.Seeders.destroy({
+                        where: {
+                            name: seeder.name,
+                        },
+                    });
+
+                    logger.active = true;
+                    logger.log(seeder.name);
+                }
+                logger.active = true;
+                logger.log('Seeding successfull!');
+            } catch (error) {
+                logger.active = true;
+                logger.log('Error running seeders');
                 throw error;
             }
         });
