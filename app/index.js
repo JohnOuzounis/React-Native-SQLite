@@ -34,18 +34,12 @@ export function Test() {
             );
             setVersion(result['sqlite_version()']);
 
-            const { Food } = getModels();
+            const { User } = getModels();
 
-            console.log(await Food.findAll());
-            console.log(
-                await Food.findAll({
-                    attributes: [
-                        [['AVG', 'protein'], 'protein_avg'],
-                        [['AVG', 'fat'], 'fat_avg'],
-                        [['AVG', 'carb'], 'carb_avg'],
-                    ],
-                })
-            );
+            await User.create({
+                username: 'name',
+            });
+            console.log(await User.findAll());
         }
         setup().catch(console.log);
     }, []);

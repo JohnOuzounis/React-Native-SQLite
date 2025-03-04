@@ -1,18 +1,32 @@
 import { sqlite } from '../db/database';
 
-const User = sqlite.define('User', {
-    email: {
-        type: sqlite.datatypes.STRING,
-        primaryKey: true,
-        allowNull: false,
+const User = sqlite.define(
+    'Users',
+    {
+        id: {
+            type: sqlite.datatypes.INTEGER,
+            primaryKey: true,
+            autoIncrement: true,
+            allowNull: false,
+        },
+        username: {
+            type: sqlite.datatypes.STRING,
+            allowNull: false,
+            unique: true,
+        },
+        createdAt: {
+            type: sqlite.datatypes.DATE,
+            defaultValue: sqlite.fn('NOW'),
+            allowNull: false,
+        },
+        updatedAt: {
+            type: sqlite.datatypes.DATE,
+            defaultValue: sqlite.fn('NOW'),
+            allowNull: false,
+        },
     },
-    value: {
-        type: sqlite.datatypes.STRING,
-    },
-    intValue: {
-        type: sqlite.datatypes.INTEGER,
-    },
-});
+    { localtime: true, paranoid: true }
+);
 
 const Food = sqlite.define('Food', {
     protein: {
