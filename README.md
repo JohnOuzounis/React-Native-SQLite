@@ -437,6 +437,8 @@ The `queryInterface` provides methods for database schema changes such as creati
 - `dropColumn`
 - `renameTable`
 - `renameColumn`
+- `bulkCreate`
+- `bulkDelete`
 
 **Unsupported Methods**
 
@@ -453,7 +455,7 @@ The `queryInterface` provides methods for database schema changes such as creati
 
 ### Define migrations
 
-Each migration file should follow a structured format with up (apply changes) and down (revert changes) methods.
+Each migration file should follow a structured format with `up` (apply changes) and `down` (revert changes) methods.
 
 ```javascript
 const createUser = {
@@ -485,6 +487,36 @@ const createUser = {
     },
     down: async (queryInterface, sqlite) => {
         await queryInterface.dropTable('Users');
+    },
+};
+```
+
+### Define seeders
+
+Similar to migrations, you can define seeders for your database using the `sqlite.seed` and `sqlite.seedUndo` methods. Each seeder file should follow a structured format with `up` (apply changes) and `down` (revert changes) methods.
+
+```javascript
+const addUsers = {
+    name: '001_add_users',
+    up: async (queryInterface, sqlite) => {
+        const data = [
+            {
+                username: 'User1',
+            },
+            {
+                username: 'User2',
+            },
+            {
+                username: 'User3',
+            },
+        ];
+
+        await queryInterface.bulkCreate('Users', data);
+    },
+    down: async (queryInterface, sqlite) => {
+        await queryInterface.bulkDestoy('Users', {
+            where: { username: ['User1', 'User2', 'User3'] },
+        });
     },
 };
 ```
