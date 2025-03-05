@@ -10,6 +10,8 @@
 [Operators](#using-operators)
 [Associations](#3-adding-associations)
 [DbProvider](#5-using-the-dbprovider-context)
+[Queries](#additional-model-methods)
+[Migrations](#migrations)
 
 ## Introduction
 
@@ -157,7 +159,7 @@ const Post = sqlite.define('Post', {
 });
 
 // Add associations
-Post.belongsTo(User, {
+Post.belongsTo('User', {
     foreignKey: 'userId',
 });
 ```
@@ -379,7 +381,9 @@ const User = sqlite.define('User', {
 });
 
 sqlite.models.User.findAll({
-  attributes:[sqlite.fn('AVG', 'salary'), 'avg_salary']
+  attributes:[
+    [sqlite.fn('AVG', 'salary'), 'avg_salary']
+  ]
   where: {
     age: { [Op.gt]: 18 }
   },
@@ -390,7 +394,36 @@ sqlite.models.User.findAll({
 
 - **`where`**: Object specifying query conditions.
 - **`attributes`**: Array of attributes to retrieve.
+
+    ```javascript
+    const user = await sqlite.models.User.findOne({
+        attributes: [
+            'username',
+            ['phone', 'mobile'], // includes 'phone' with alias 'mobile'
+        ],
+        where: {
+            username: 'test-user',
+        },
+    });
+    ```
+
 - **`include`**: Array of associated models to include.
+
+    ```javascript
+    const userPosts = await sqlite.models.User.findOne({
+        where: {
+            username: 'test-user'
+        },
+        include: [
+            {
+                model: 'Posts',
+                on: ['id', 'userId'] // join on User.id and Posts.userId
+                type: 'INNER'
+            }
+        ]
+    })
+    ```
+
 - **`order`**: An array specifying the order in which the results should be returned.
 - **`limit`**: A number that specifies the maximum number of records to return from the query.
 - **`offset`**: A number that specifies the number of records to skip before starting to collect the result set.
