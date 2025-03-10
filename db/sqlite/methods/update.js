@@ -13,7 +13,7 @@ const update = async params => {
 const upsert = async params => {
     const { model, args, sqlite } = params;
     const [data = {}, options = {}] = args;
-    const upsertQuery = builder.upsert(model, data, options);
+    const upsertQuery = builder.upsert(model, data, options, sqlite);
     logger.log(upsertQuery);
 
     await sqlite.instance.execAsync(`${upsertQuery}`);
