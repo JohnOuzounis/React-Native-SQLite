@@ -16,6 +16,9 @@ export const generateUpdate = (model, data, options, sqlite) => {
     const whereClause = generateWhereClause(model.modelName, whereOptions);
     const columns = Object.entries(data)
         .map(([name, value]) => {
+            if (value === null) {
+                return `${name} = NULL`;
+            }
             if (typeof value === 'string') {
                 return ` ${name} = '${value.replace(/'/g, "''")}'`;
             }
