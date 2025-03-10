@@ -1,6 +1,6 @@
 import { generateWhereClause } from '../utils';
 
-export const generateUpdate = (model, data, options) => {
+export const generateUpdate = (model, data, options, sqlite) => {
     const { where } = options;
     const whereOptions = model.paranoid
         ? { ...where, deletedAt: { [Op.IS]: null } }

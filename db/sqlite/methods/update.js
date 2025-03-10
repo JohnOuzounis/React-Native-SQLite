@@ -4,7 +4,7 @@ import builder from '../queryBuilder';
 const update = async params => {
     const { model, args, sqlite } = params;
     const [data = {}, options = {}] = args;
-    const updateQuery = builder.update(model, data, options);
+    const updateQuery = builder.update(model, data, options, sqlite);
     logger.log(updateQuery);
 
     await sqlite.instance.execAsync(`${updateQuery}`);
