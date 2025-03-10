@@ -101,7 +101,8 @@ export const generateIncludeClause = (modelName, include = []) => {
 
 export const getConflictColumns = attributes =>
     Object.keys(attributes).filter(
-        attr => attributes[attr].primaryKey || attributes[attr].unique
+        attr => attributes[attr].primaryKey
+        // || attributes[attr].unique
     );
 
 export const generateConflictClause = conflictColumns => {

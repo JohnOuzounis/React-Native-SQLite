@@ -11,6 +11,9 @@ const generateInsert = (model, data, sqlite) => {
     const columns = Object.keys(data).join(', ');
     const values = Object.values(data)
         .map(value => {
+            if (value === null) {
+                return 'NULL';
+            }
             if (typeof value === 'string') {
                 return `'${value.replace(/'/g, "''")}'`;
             }
