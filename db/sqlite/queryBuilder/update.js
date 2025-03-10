@@ -1,4 +1,5 @@
 import { generateWhereClause } from '../utils';
+import { Op } from '../operations';
 
 export const generateUpdate = (model, data, options, sqlite) => {
     const { where } = options;
