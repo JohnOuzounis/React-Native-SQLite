@@ -160,7 +160,7 @@ const Post = sqlite.define('Post', {
 
 // Add associations
 Post.belongsTo('User', {
-    foreignKey: 'userId',
+    foreignKey: { name: 'userId', type: sqlite.datatypes.INTEGER },
 });
 ```
 
