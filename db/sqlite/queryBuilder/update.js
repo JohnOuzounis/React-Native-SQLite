@@ -28,7 +28,7 @@ export const generateUpdate = (model, data, options, sqlite) => {
             if (value instanceof Date) {
                 return `${name} = '${value.toISOString()}'`;
             }
-            return value;
+            return `${name} = ${value}`;
         })
         .join(', ');
 
