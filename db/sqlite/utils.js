@@ -33,22 +33,22 @@ export const generateWhereClause = (modelName, where) => {
     const buildCondition = ([key, condition]) => {
         if (Array.isArray(condition)) {
             const values = condition.map(parseValue).join(', ');
-            return `'${modelName}'.'${key}' ${Op.IN} (${values})`;
+            return `\`${modelName}\`.\`${key}\` ${Op.IN} (${values})`;
         }
 
         if (typeof condition === 'object' && condition !== null) {
             const clauses = Object.entries(condition).map(([op, value]) => {
                 if (Array.isArray(value)) {
                     const values = value.map(parseValue).join(', ');
-                    return `'${modelName}'.'${key}' ${op} (${values})`;
+                    return `\`${modelName}\`.\`${key}\` ${op} (${values})`;
                 }
 
-                return `'${modelName}'.'${key}' ${op} ${parseValue(value)}`;
+                return `\`${modelName}\`.\`${key}\` ${op} ${parseValue(value)}`;
             });
             return clauses.join(' AND ');
         }
 
-        return `'${modelName}'.'${key}' ${Op.EQ} ${parseValue(condition)}`;
+        return `\`${modelName}\`.\`${key}\` ${Op.EQ} ${parseValue(condition)}`;
     };
 
     const buildClause = where => {
@@ -101,8 +101,7 @@ export const generateIncludeClause = (modelName, include = []) => {
 
 export const getConflictColumns = attributes =>
     Object.keys(attributes).filter(
-        attr => attributes[attr].primaryKey
-        // || attributes[attr].unique
+        attr => attributes[attr].primaryKey || attributes[attr].unique
     );
 
 export const generateConflictClause = conflictColumns => {
