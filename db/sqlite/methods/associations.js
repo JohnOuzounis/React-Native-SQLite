@@ -17,14 +17,19 @@ const belongsTo = params => {
         ([, attribute]) => attribute.primaryKey === true
     ) || ['id'];
 
-    const attributes = {
-        ...model.attributes,
-        [foreignKey.name]: {
+    if (!model.attributes[foreignKey.name]) {
+        model.attributes[foreignKey.name] = {
             type: foreignKey.type,
-        },
-    };
+        };
+    }
+    // const attributes = {
+    //     ...model.attributes,
+    //     [foreignKey.name]: {
+    //         type: foreignKey.type,
+    //     },
+    // };
 
-    model.attributes = Object.freeze(attributes);
+    // model.attributes = Object.freeze(attributes);
     model.associations = model.associations || {};
     model.associations.belongsTo = model.associations.belongsTo || [];
 
