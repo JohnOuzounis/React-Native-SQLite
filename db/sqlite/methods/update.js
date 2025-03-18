@@ -1,5 +1,6 @@
 import logger from '../logger/logger';
 import builder from '../queryBuilder';
+import { getLastUpdatedRow } from '../utils';
 
 const update = async params => {
     const { model, args, sqlite } = params;
@@ -8,6 +9,12 @@ const update = async params => {
     logger.log(updateQuery);
 
     await sqlite.instance.execAsync(`${updateQuery}`);
+
+    const getLastRowQuery = getLastUpdatedRow(model, options);
+    const result = await sqlite.instance.getAllAsync(getLastRowQuery);
+
+    const lastRow = result[0] || null;
+    return lastRow;
 };
 
 const upsert = async params => {

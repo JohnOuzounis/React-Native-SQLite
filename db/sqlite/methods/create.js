@@ -1,5 +1,6 @@
 import logger from '../logger/logger';
 import builder from '../queryBuilder/index';
+import { getLastInsertedRow } from '../utils';
 
 async function init(params) {
     const { model, sqlite } = params;
@@ -16,6 +17,12 @@ async function create(params) {
     logger.log(insertQuery);
 
     await sqlite.instance.execAsync(`${insertQuery}`);
+
+    const getLastRowQuery = getLastInsertedRow(model);
+    const result = await sqlite.instance.getAllAsync(getLastRowQuery);
+
+    const lastRow = result[0] || null;
+    return lastRow;
 }
 
 async function bulkCreate(params) {

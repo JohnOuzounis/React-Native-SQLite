@@ -24,7 +24,9 @@ const findByPk = async params => {
     const selectQuery = builder.select(model, options);
     logger.log(selectQuery);
 
-    return await sqlite.instance.getAllAsync(`${selectQuery}`);
+    const result = await sqlite.instance.getAllAsync(`${selectQuery}`);
+    const row = result[0] || null;
+    return row;
 };
 
 const findOne = async params => {
@@ -33,7 +35,9 @@ const findOne = async params => {
     const selectQuery = builder.select(model, { ...options, limit: 1 });
     logger.log(selectQuery);
 
-    return await sqlite.instance.getAllAsync(`${selectQuery}`);
+    const result = await sqlite.instance.getAllAsync(`${selectQuery}`);
+    const row = result[0] || null;
+    return row;
 };
 
 const findAndCountAll = async params => {

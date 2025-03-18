@@ -112,3 +112,17 @@ export const generateConflictClause = conflictColumns => {
 
     return conflictClause;
 };
+
+export const getLastInsertedRow = model => {
+    const pk = Object.keys(model.attributes).filter(
+        attr => model.attributes[attr].primaryKey
+    )[0];
+
+    const getLastRowQuery = `SELECT * FROM ${model.modelName} WHERE ${pk || 'id'} = (SELECT last_insert_rowid());`;
+    return getLastRowQuery;
+};
+
+export const getLastUpdatedRow = (model, options) => {
+    const getLastRowQuery = `SELECT * FROM ${model.modelName} ${generateWhereClause(model.modelName, options.where)};`;
+    return getLastRowQuery;
+};
