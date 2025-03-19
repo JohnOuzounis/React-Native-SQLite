@@ -76,6 +76,8 @@ const sqlite = {
         return `${funcConfig}(${args.join(', ')})`;
     },
     define: function (model, attributes, options = {}) {
+        if (sqlite.models[model]) return sqlite.models[model];
+
         sqlite.models[model] = {
             attributes: attributes,
             modelName: model,
