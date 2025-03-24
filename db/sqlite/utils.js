@@ -1,6 +1,9 @@
 import { Op } from './operations';
 
 const parseValue = value => {
+    if (value === null) {
+        return 'NULL';
+    }
     if (typeof value === 'string') {
         return `'${value.replace(/'/g, "''")}'`;
     }
