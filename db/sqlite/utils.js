@@ -13,21 +13,32 @@ const parseValue = value => {
     return value;
 };
 
-export const generateColumns = attributes => {
-    if (!attributes || attributes.length <= 0) return '*';
+export const generateColumns = (attributes, include) => {
+    if (!attributes || attributes.length === 0) return '*';
 
-    const columns = attributes
-        .map(attr => {
-            if (Array.isArray(attr)) {
-                const func = attr[0];
-                const alias = attr[1];
-                return `${func} AS ${alias}`;
-            }
-            return attr;
-        })
-        .join(', ');
+    const mainColumns = attributes.map(attr => {
+        if (Array.isArray(attr)) {
+            const func = attr[0];
+            const alias = attr[1];
+            return `${func} AS ${alias}`;
+        }
+        return attr;
+    });
 
-    return columns;
+    const includeColumns = include
+        ? include.flatMap(joinObj =>
+              (joinObj.attributes || []).map(attr => {
+                  if (Array.isArray(attr)) {
+                      const func = attr[0];
+                      const alias = attr[1];
+                      return `${func} AS ${alias}`;
+                  }
+                  return `${joinObj.model}.${attr}`;
+              })
+          )
+        : [];
+
+    return [...mainColumns, ...includeColumns].join(', ');
 };
 
 export const generateWhereClause = (modelName, where) => {
@@ -95,9 +106,9 @@ export const generateIncludeClause = (modelName, include = []) => {
 
     return include
         .map(joinObj => {
-            const { model, on, type = 'INNER' } = joinObj;
+            const { model, on, type = 'INNER', target = modelName } = joinObj;
             const [leftCol, rightCol] = on;
-            return ` ${type.toUpperCase()} JOIN ${model} ON '${modelName}'.'${leftCol}' = '${model}'.'${rightCol}'`;
+            return ` ${type.toUpperCase()} JOIN ${model} ON ${target}.${leftCol} = ${model}.${rightCol}`;
         })
         .join(' ');
 };

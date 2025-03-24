@@ -418,7 +418,8 @@ sqlite.models.User.findAll({
             {
                 model: 'Posts',
                 on: ['id', 'userId'] // join on User.id and Posts.userId
-                type: 'INNER'
+                type: 'INNER',
+                target: 'User' // you can specify target table by default it's the table you query
             }
         ]
     })
