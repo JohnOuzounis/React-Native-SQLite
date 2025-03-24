@@ -97,7 +97,7 @@ export const generateIncludeClause = (modelName, include = []) => {
         .map(joinObj => {
             const { model, on, type = 'INNER' } = joinObj;
             const [leftCol, rightCol] = on;
-            return `${type.toUpperCase()} JOIN ${model} ON '${modelName}'.'${leftCol}' = '${model}'.'${rightCol}'`;
+            return ` ${type.toUpperCase()} JOIN ${model} ON '${modelName}'.'${leftCol}' = '${model}'.'${rightCol}'`;
         })
         .join(' ');
 };
