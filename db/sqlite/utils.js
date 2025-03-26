@@ -16,6 +16,24 @@ const parseValue = value => {
 export const generateColumns = (attributes, include) => {
     if (!attributes || attributes.length === 0) return '*';
 
+    const processIncludeColumns = includeArray => {
+        return includeArray.flatMap(joinObj => {
+            const columns = (joinObj.attributes || []).map(attr => {
+                if (Array.isArray(attr)) {
+                    const func = attr[0];
+                    const alias = attr[1];
+                    return `${func} AS ${alias}`;
+                }
+                return `${joinObj.model}.${attr}`;
+            });
+
+            if (joinObj.include) {
+                return [...columns, ...processIncludeColumns(joinObj.include)];
+            }
+            return columns;
+        });
+    };
+
     const mainColumns = attributes.map(attr => {
         if (Array.isArray(attr)) {
             const func = attr[0];
@@ -25,18 +43,7 @@ export const generateColumns = (attributes, include) => {
         return attr;
     });
 
-    const includeColumns = include
-        ? include.flatMap(joinObj =>
-              (joinObj.attributes || []).map(attr => {
-                  if (Array.isArray(attr)) {
-                      const func = attr[0];
-                      const alias = attr[1];
-                      return `${func} AS ${alias}`;
-                  }
-                  return `${joinObj.model}.${attr}`;
-              })
-          )
-        : [];
+    const includeColumns = include ? processIncludeColumns(include) : [];
 
     return [...mainColumns, ...includeColumns].join(', ');
 };
@@ -207,6 +214,7 @@ export const getGroupedResults = (results, model, include, sqlite) => {
                 if (!groupedResult[as]) {
                     groupedResult[as] = [];
                 }
+
                 groupedResult[as].push(relatedItem);
             }
 
