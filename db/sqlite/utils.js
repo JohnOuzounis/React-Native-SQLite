@@ -104,13 +104,30 @@ export const generateGroupByClause = (model, group) => {
 export const generateIncludeClause = (modelName, include = []) => {
     if (include.length === 0) return '';
 
-    return include
-        .map(joinObj => {
-            const { model, on, type = 'INNER', target = modelName } = joinObj;
-            const [leftCol, rightCol] = on;
-            return ` ${type.toUpperCase()} JOIN ${model} ON ${target}.${leftCol} = ${model}.${rightCol}`;
-        })
-        .join(' ');
+    const processInclude = includeArray => {
+        return includeArray
+            .map(joinObj => {
+                const {
+                    model,
+                    on,
+                    type = 'INNER',
+                    include: nestedInclude = [],
+                    target = modelName,
+                } = joinObj;
+                const [leftCol, rightCol] = on;
+
+                let joinClause = ` ${type.toUpperCase()} JOIN ${model} ON ${target}.${leftCol} = ${model}.${rightCol}`;
+
+                if (nestedInclude.length) {
+                    joinClause += processInclude(nestedInclude);
+                }
+
+                return joinClause;
+            })
+            .join(' ');
+    };
+
+    return processInclude(include);
 };
 
 export const getConflictColumns = attributes =>
@@ -139,4 +156,81 @@ export const getLastInsertedRow = model => {
 export const getLastUpdatedRow = (model, options) => {
     const getLastRowQuery = `SELECT * FROM ${model.modelName} ${generateWhereClause(model.modelName, options.where)};`;
     return getLastRowQuery;
+};
+
+export const getGroupedResults = (results, model, include, sqlite) => {
+    if (!include) return results;
+
+    const pk = Object.keys(model.attributes).find(
+        attr => model.attributes[attr].primaryKey
+    );
+
+    const processInclude = (
+        groupedResult,
+        result,
+        includeArray,
+        parentModel
+    ) => {
+        includeArray.forEach(inc => {
+            const {
+                model: incModel,
+                attributes: incAttributes,
+                on,
+                as = incModel,
+                target = parentModel.modelName,
+                include: nestedInclude = [],
+            } = inc;
+
+            const groupModel = sqlite.models[target];
+            const foreignKey = on[1];
+
+            const hasOneAssoc = groupModel.associations?.hasOne?.find(
+                assoc =>
+                    assoc.target === incModel && assoc.foreignKey === foreignKey
+            );
+
+            const hasManyAssoc = groupModel.associations?.hasMany?.find(
+                assoc =>
+                    assoc.target === incModel && assoc.foreignKey === foreignKey
+            );
+
+            const relatedItem = {};
+            incAttributes.forEach(attr => {
+                const key = Array.isArray(attr) ? attr[1] : attr;
+                relatedItem[key] = result[key];
+                delete groupedResult[key];
+            });
+
+            if (hasOneAssoc) {
+                groupedResult[as] = relatedItem;
+            } else if (hasManyAssoc) {
+                if (!groupedResult[as]) {
+                    groupedResult[as] = [];
+                }
+                groupedResult[as].push(relatedItem);
+            }
+
+            if (nestedInclude.length) {
+                processInclude(
+                    relatedItem,
+                    result,
+                    nestedInclude,
+                    sqlite.models[incModel]
+                );
+            }
+        });
+    };
+
+    return results.reduce((acc, result) => {
+        let groupedResult = acc.find(item => item[pk] === result[pk]);
+
+        if (!groupedResult) {
+            groupedResult = { ...result };
+            acc.push(groupedResult);
+        }
+
+        processInclude(groupedResult, result, include, model);
+
+        return acc;
+    }, []);
 };

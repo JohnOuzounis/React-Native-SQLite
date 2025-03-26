@@ -22,14 +22,7 @@ const belongsTo = params => {
             type: foreignKey.type,
         };
     }
-    // const attributes = {
-    //     ...model.attributes,
-    //     [foreignKey.name]: {
-    //         type: foreignKey.type,
-    //     },
-    // };
 
-    // model.attributes = Object.freeze(attributes);
     model.associations = model.associations || {};
     model.associations.belongsTo = model.associations.belongsTo || [];
 
@@ -68,12 +61,8 @@ const belongsToMany = params => {
     ];
 
     sqlite.define(joinTable, {
-        [sourceKeyName]: {
-            type: sourceKeyConfig.type,
-        },
-        [targetKeyName]: {
-            type: targetKeyConfig.type,
-        },
+        [sourceKeyName]: sourceKeyConfig,
+        [targetKeyName]: targetKeyConfig,
         ...options.attributes,
     });
 
@@ -120,4 +109,48 @@ const belongsToMany = params => {
     });
 };
 
-export default { belongsTo, belongsToMany };
+const hasOne = params => {
+    const { model, args, sqlite } = params;
+    const [target, options = {}] = args;
+    const targetModel = sqlite.models[target];
+
+    const foreignKey = getForeignKeyName(targetModel, options, sqlite);
+    const [referenceKey] = Object.entries(targetModel.attributes).find(
+        ([, attribute]) => attribute.primaryKey === true
+    ) || ['id'];
+
+    model.associations = model.associations || {};
+    model.associations.hasOne = model.associations.hasOne || [];
+
+    model.associations.hasOne.push({
+        target: targetModel.modelName,
+        foreignKey: foreignKey.name,
+        referenceKey,
+        onDelete: options.onDelete || 'SET NULL',
+        onUpdate: 'CASCADE',
+    });
+};
+
+const hasMany = params => {
+    const { model, args, sqlite } = params;
+    const [target, options = {}] = args;
+    const targetModel = sqlite.models[target];
+
+    const foreignKey = getForeignKeyName(targetModel, options, sqlite);
+    const [referenceKey] = Object.entries(targetModel.attributes).find(
+        ([, attribute]) => attribute.primaryKey === true
+    ) || ['id'];
+
+    model.associations = model.associations || {};
+    model.associations.hasMany = model.associations.hasMany || [];
+
+    model.associations.hasMany.push({
+        target: targetModel.modelName,
+        foreignKey: foreignKey.name,
+        referenceKey,
+        onDelete: options.onDelete || 'SET NULL',
+        onUpdate: 'CASCADE',
+    });
+};
+
+export default { belongsTo, belongsToMany, hasOne, hasMany };

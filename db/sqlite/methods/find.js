@@ -1,5 +1,6 @@
 import logger from '../logger/logger';
 import builder from '../queryBuilder';
+import { getGroupedResults } from '../utils';
 
 const findAll = async params => {
     const { model, args, sqlite } = params;
@@ -7,7 +8,15 @@ const findAll = async params => {
     const selectQuery = builder.select(model, options);
     logger.log(selectQuery);
 
-    return await sqlite.instance.getAllAsync(`${selectQuery}`);
+    const results = await sqlite.instance.getAllAsync(`${selectQuery}`);
+    const groupedResults = getGroupedResults(
+        results,
+        model,
+        options.include,
+        sqlite
+    );
+
+    return groupedResults;
 };
 
 const findByPk = async params => {
@@ -25,7 +34,14 @@ const findByPk = async params => {
     logger.log(selectQuery);
 
     const result = await sqlite.instance.getAllAsync(`${selectQuery}`);
-    const row = result[0] || null;
+    const groupedResults = getGroupedResults(
+        result,
+        model,
+        options.include,
+        sqlite
+    );
+
+    const row = groupedResults[0] || null;
     return row;
 };
 
@@ -36,7 +52,14 @@ const findOne = async params => {
     logger.log(selectQuery);
 
     const result = await sqlite.instance.getAllAsync(`${selectQuery}`);
-    const row = result[0] || null;
+    const groupedResults = getGroupedResults(
+        result,
+        model,
+        options.include,
+        sqlite
+    );
+
+    const row = groupedResults[0] || null;
     return row;
 };
 

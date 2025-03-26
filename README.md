@@ -408,21 +408,39 @@ sqlite.models.User.findAll({
     ```
 
 - **`include`**: Array of associated models to include.
+  The `include` parameter allows you to specify associated models to join in queries. It is important to include the queried model's primary key in the attributes
+  Each include object should define:
+
+    - `model`: The associated model name.
+    - `on`: The join condition (array of column names from parent and child models).
+    - `attributes`: The columns to select from the associated model.
+    - `as`: (Optional) Alias for the associated model.
+    - `target`: (Optional) Specifies the parent model; defaults to the queried model.
+    - `include`: (Optional) Nested associations for deeper relationships.
+
+    Example Usage:
 
     ```javascript
-    const userPosts = await sqlite.models.User.findOne({
-        where: {
-            username: 'test-user'
-        },
+    const res = await User.findAll({
+        attributes: ['Users.id', 'username'],
         include: [
             {
                 model: 'Posts',
-                on: ['id', 'userId'] // join on User.id and Posts.userId
-                type: 'INNER',
-                target: 'User' // you can specify target table by default it's the table you query
-            }
-        ]
-    })
+                on: ['id', 'userId'],
+                attributes: ['id', 'title'],
+                as: 'posts',
+                include: [
+                    {
+                        model: 'Comments',
+                        on: ['id', 'postId'],
+                        attributes: ['id', 'content'],
+                        target: 'Posts',
+                        as: 'comments',
+                    },
+                ],
+            },
+        ],
+    });
     ```
 
 - **`order`**: An array specifying the order in which the results should be returned.
