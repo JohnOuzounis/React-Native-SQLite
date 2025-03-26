@@ -9,14 +9,14 @@ const findAll = async params => {
     logger.log(selectQuery);
 
     const results = await sqlite.instance.getAllAsync(`${selectQuery}`);
-    const groupedResults = getGroupedResults(
-        results,
-        model,
-        options.include,
-        sqlite
-    );
+    // const groupedResults = getGroupedResults(
+    //     results,
+    //     model,
+    //     options.include,
+    //     sqlite
+    // );
 
-    return groupedResults;
+    return results;
 };
 
 const findByPk = async params => {
@@ -34,14 +34,14 @@ const findByPk = async params => {
     logger.log(selectQuery);
 
     const result = await sqlite.instance.getAllAsync(`${selectQuery}`);
-    const groupedResults = getGroupedResults(
-        result,
-        model,
-        options.include,
-        sqlite
-    );
+    // const groupedResults = getGroupedResults(
+    //     result,
+    //     model,
+    //     options.include,
+    //     sqlite
+    // );
 
-    const row = groupedResults[0] || null;
+    const row = result[0] || null;
     return row;
 };
 
@@ -52,14 +52,14 @@ const findOne = async params => {
     logger.log(selectQuery);
 
     const result = await sqlite.instance.getAllAsync(`${selectQuery}`);
-    const groupedResults = getGroupedResults(
-        result,
-        model,
-        options.include,
-        sqlite
-    );
+    // const groupedResults = getGroupedResults(
+    //     result,
+    //     model,
+    //     options.include,
+    //     sqlite
+    // );
 
-    const row = groupedResults[0] || null;
+    const row = result[0] || null;
     return row;
 };
 
