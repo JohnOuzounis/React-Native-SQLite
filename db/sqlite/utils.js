@@ -201,12 +201,11 @@ export const getGroupedResults = (results, model, include, sqlite) => {
                     assoc.target === incModel && assoc.foreignKey === foreignKey
             );
 
-            const belongsToManyAssoc =
-                groupModel.associations?.belongsToMany?.find(
-                    assoc =>
-                        assoc.target === incModel &&
-                        assoc.foreignKey === foreignKey
-                );
+            const belongsToManyAssoc = sqlite.models[
+                incModel
+            ].associations?.belongsToMany?.find(
+                assoc => assoc.through === target
+            );
 
             const relatedItem = {};
             incAttributes.forEach(attr => {
