@@ -60,12 +60,6 @@ const belongsToMany = params => {
         { type: sqlite.datatypes.INTEGER },
     ];
 
-    sqlite.define(joinTable, {
-        [sourceKeyName]: sourceKeyConfig,
-        [targetKeyName]: targetKeyConfig,
-        ...options.attributes,
-    });
-
     model.associations = model.associations || {};
     model.associations.belongsToMany = model.associations.belongsToMany || [];
 
@@ -85,6 +79,14 @@ const belongsToMany = params => {
         through: joinTable,
         sourceKey: targetKeyName,
         foreignKey: sourceKeyName,
+    });
+
+    if (sqlite.models[joinTable]) return;
+
+    sqlite.define(joinTable, {
+        [sourceKeyName]: sourceKeyConfig,
+        [targetKeyName]: targetKeyConfig,
+        ...options.attributes,
     });
 
     sqlite.models[joinTable].associations.belongsTo =

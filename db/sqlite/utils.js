@@ -201,6 +201,13 @@ export const getGroupedResults = (results, model, include, sqlite) => {
                     assoc.target === incModel && assoc.foreignKey === foreignKey
             );
 
+            const belongsToManyAssoc =
+                groupModel.associations?.belongsToMany?.find(
+                    assoc =>
+                        assoc.target === incModel &&
+                        assoc.foreignKey === foreignKey
+                );
+
             const relatedItem = {};
             incAttributes.forEach(attr => {
                 const key = Array.isArray(attr) ? attr[1] : attr;
@@ -210,7 +217,7 @@ export const getGroupedResults = (results, model, include, sqlite) => {
 
             if (hasOneAssoc) {
                 groupedResult[as] = relatedItem;
-            } else if (hasManyAssoc) {
+            } else if (hasManyAssoc || belongsToManyAssoc) {
                 if (!groupedResult[as]) {
                     groupedResult[as] = [];
                 }
