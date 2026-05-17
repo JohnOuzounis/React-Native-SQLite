@@ -139,7 +139,7 @@ export const generateIncludeClause = (modelName, include = []) => {
 
 export const getConflictColumns = attributes =>
     Object.keys(attributes).filter(
-        attr => attributes[attr].primaryKey || attributes[attr].unique
+        attr => attributes[attr].primaryKey || attributes[attr].unique,
     );
 
 export const generateConflictClause = conflictColumns => {
@@ -151,12 +151,17 @@ export const generateConflictClause = conflictColumns => {
     return conflictClause;
 };
 
-export const getLastInsertedRow = model => {
-    const pk = Object.keys(model.attributes).filter(
-        attr => model.attributes[attr].primaryKey
-    )[0];
+export const getLastInsertedRow = (model, data) => {
+    const pk =
+        Object.keys(model.attributes).filter(
+            attr => model.attributes[attr].primaryKey,
+        )[0] || 'id';
 
-    const getLastRowQuery = `SELECT * FROM ${model.modelName} WHERE ${pk || 'id'} = (SELECT last_insert_rowid());`;
+    const value = data[pk]
+        ? parseValue(data[pk])
+        : `(SELECT (last_insert_rowid()))`;
+
+    const getLastRowQuery = `SELECT * FROM ${model.modelName} WHERE ${pk} = ${value};`;
     return getLastRowQuery;
 };
 
@@ -169,14 +174,14 @@ export const getGroupedResults = (results, model, include, sqlite) => {
     if (!include) return results;
 
     const pk = Object.keys(model.attributes).find(
-        attr => model.attributes[attr].primaryKey
+        attr => model.attributes[attr].primaryKey,
     );
 
     const processInclude = (
         groupedResult,
         result,
         includeArray,
-        parentModel
+        parentModel,
     ) => {
         includeArray.forEach(inc => {
             const {
@@ -193,18 +198,20 @@ export const getGroupedResults = (results, model, include, sqlite) => {
 
             const hasOneAssoc = groupModel.associations?.hasOne?.find(
                 assoc =>
-                    assoc.target === incModel && assoc.foreignKey === foreignKey
+                    assoc.target === incModel &&
+                    assoc.foreignKey === foreignKey,
             );
 
             const hasManyAssoc = groupModel.associations?.hasMany?.find(
                 assoc =>
-                    assoc.target === incModel && assoc.foreignKey === foreignKey
+                    assoc.target === incModel &&
+                    assoc.foreignKey === foreignKey,
             );
 
             const belongsToManyAssoc = sqlite.models[
                 incModel
             ].associations?.belongsToMany?.find(
-                assoc => assoc.through === target
+                assoc => assoc.through === target,
             );
 
             const relatedItem = {};
@@ -229,7 +236,7 @@ export const getGroupedResults = (results, model, include, sqlite) => {
                     relatedItem,
                     result,
                     nestedInclude,
-                    sqlite.models[incModel]
+                    sqlite.models[incModel],
                 );
             }
         });

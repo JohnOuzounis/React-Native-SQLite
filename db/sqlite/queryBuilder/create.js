@@ -26,7 +26,7 @@ const setTimestamps = (model, sqlite) => {
             type: sqlite.datatypes.DATE,
             defaultValue: sqlite.fn(
                 'NOW',
-                ...(localtime ? ["'localtime'"] : [])
+                ...(localtime ? ["'localtime'"] : []),
             ),
             allowNull: false,
         };
@@ -34,7 +34,7 @@ const setTimestamps = (model, sqlite) => {
             type: sqlite.datatypes.DATE,
             defaultValue: sqlite.fn(
                 'NOW',
-                ...(localtime ? ["'localtime'"] : [])
+                ...(localtime ? ["'localtime'"] : []),
             ),
             allowNull: false,
         };
@@ -75,6 +75,15 @@ const createColumns = (model, sqlite) => {
 };
 
 const createConstraints = model => {
+    const constraints = [];
+
+    const assoc = createAssociationConstraints(model);
+    constraints.push(...assoc);
+
+    return constraints;
+};
+
+const createAssociationConstraints = model => {
     const constraints = [];
 
     const { associations } = model;

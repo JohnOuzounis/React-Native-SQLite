@@ -95,18 +95,27 @@ const sqlite = {
     sync: function () {
         return this.instance?.withExclusiveTransactionAsync(async () => {
             await this.instance.execAsync(
-                `PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;`
+                `PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;`,
             );
 
             await Promise.all(
                 Object.values(this.models).map(model =>
-                    model.init({ model, sqlite: this })
-                )
+                    model.init({ model, sqlite: this }),
+                ),
             );
         });
     },
     transaction: function (func) {
         return this.instance?.withExclusiveTransactionAsync(func);
+    },
+    query: function (sql, params = []) {
+        return this.instance?.getAllAsync(sql, params);
+    },
+    exec: function (sql) {
+        return this.instance?.execAsync(sql);
+    },
+    run: function (sql, params = []) {
+        return this.instance?.runAsync(sql, params);
     },
     migrate: function (migrations) {
         return this.instance?.withExclusiveTransactionAsync(async () => {
@@ -114,7 +123,7 @@ const sqlite = {
 
             const queryInterface = createInterface(this);
             const orderedMigrations = migrations.sort((a, b) =>
-                a.name.localeCompare(b.name)
+                a.name.localeCompare(b.name),
             );
 
             try {
@@ -151,7 +160,7 @@ const sqlite = {
 
             const queryInterface = createInterface(this);
             const orderedMigrations = migrations.sort((a, b) =>
-                b.name.localeCompare(a.name)
+                b.name.localeCompare(a.name),
             );
 
             try {
@@ -190,7 +199,7 @@ const sqlite = {
 
             const queryInterface = createInterface(this);
             const orderedSeeders = seeders.sort((a, b) =>
-                a.name.localeCompare(b.name)
+                a.name.localeCompare(b.name),
             );
 
             try {
@@ -227,7 +236,7 @@ const sqlite = {
 
             const queryInterface = createInterface(this);
             const orderedSeeders = seeders.sort((a, b) =>
-                b.name.localeCompare(a.name)
+                b.name.localeCompare(a.name),
             );
 
             try {

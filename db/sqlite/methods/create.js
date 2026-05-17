@@ -18,7 +18,7 @@ async function create(params) {
 
     await sqlite.instance.execAsync(`${insertQuery}`);
 
-    const getLastRowQuery = getLastInsertedRow(model);
+    const getLastRowQuery = getLastInsertedRow(model, data);
     const result = await sqlite.instance.getAllAsync(getLastRowQuery);
 
     const lastRow = result[0] || null;
