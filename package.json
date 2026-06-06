@@ -1,31 +1,32 @@
 {
     "name": "react-native-sqlite",
-    "version": "1.1.4",
+    "version": "1.1.5",
     "main": "./index.js",
     "scripts": {
         "build": "powershell -ExecutionPolicy Bypass -Command \"eas build -p android --profile production\"",
         "start": "expo start"
     },
     "dependencies": {
-        "expo": "~54.0.34",
+        "expo-sqlite": "~16.0.10",
+        "uuid": "^14.0.0"
+    },
+    "devDependencies": {
+        "@babel/core": "^7.20.0",
+        "babel-preset-expo": "~54.0.10",
+        "expo": "^54.0.35",
         "expo-constants": "~18.0.13",
         "expo-linking": "~8.0.12",
         "expo-router": "~6.0.23",
         "expo-splash-screen": "~31.0.13",
-        "expo-sqlite": "~16.0.10",
         "expo-status-bar": "~3.0.9",
         "react": "19.1.0",
         "react-dom": "19.1.0",
         "react-native": "0.81.5",
         "react-native-gesture-handler": "~2.28.0",
-        "react-native-get-random-values": "^2.0.0",
+        "react-native-get-random-values": "~1.11.0",
         "react-native-safe-area-context": "~5.6.0",
         "react-native-screens": "~4.16.0",
-        "react-native-web": "^0.21.0",
-        "uuid": "^14.0.0"
-    },
-    "devDependencies": {
-        "@babel/core": "^7.20.0"
+        "react-native-web": "^0.21.0"
     },
     "private": false,
     "keywords": [
