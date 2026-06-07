@@ -160,49 +160,34 @@ const Post = sqlite.define('Post', {
 
 // Add associations
 Post.belongsTo('User', {
-    foreignKey: { name: 'userId', type: sqlite.datatypes.INTEGER },
+    foreignKey: { name: 'userId' },
 });
 ```
 
 ### Association Methods
 
-- **`belongsTo`**: Defines a many-to-one relationship or a one-to-one relationship. This will add a foreign key to the source model.
-
+- **`belongsTo`**: Defines a many-to-one relationship or a one-to-one relationship.
     - `target`: A string representing the name of the target model to which the source model belongs.
     - `options`: An object that contains options for defining the relationship.
         - `foreignKey`: An object specifying the foreign key settings. If not provided, the system will automatically use the format tableNameId.
             - `name`: A string to specify a custom name for the foreign key column.
-            - `type`: The data type of the foreign key column (e.g., `sqlite.datatypes.INTEGER`).
-        - `onDelete`: Specifies the action to be taken when the referenced target model is deleted (`CASCADE` or `SET NULL`).
+        - `as`: A string representing the name of the alias used in join queries
 
 ```javascript
 Post.belongsTo('User', {
     foreignKey: {
         name: 'userId',
-        type: sqlite.datatypes.INTEGER,
     },
-    onDelete: 'CASCADE',
+    as: 'user',
 });
 ```
 
-- **`belongsToMany`**: Defines a many-to-many relationship and creates a joint table. The joint table will contain the primary keys of the two tables or `sourceModelId` and `TargetModelId`. It is highly recommended to define the joint model and use the belongsTo association.
-    - `target`: A string representing the name of the target model to which the source model belongs.
-    - `options`: An object that contains options for defining the relationship.
-        - `through`: A string representing the name of the joint table. If not provided `sourceModel_targetModel` will be used.
-        - `attributes`: An object with additional attributes for the joint table.
-        - `onDelete`: Specifies the action to be taken when the referenced target model is deleted (`CASCADE` or `SET NULL`).
-
-```javascript
-Project.belongsToMany( "User", {
-    through: 'UserProject'
-    onDelete: "CASCADE",
-  },
-);
-```
+- **`belongsToMany`**: DO NOT USE THIS ONE
 
 ### Association Options
 
 - **`foreignKey`**: The foreign key in the target model.
+- **`as`**: A string representing the name of the alias used in join queries
 
 ## 4. Synchronizing Models
 
@@ -335,7 +320,7 @@ const UserList = () => {
     ```javascript
     await sqlite.models.User.update(
         { email: 'newemail@example.com' },
-        { where: { id: 1 } }
+        { where: { id: 1 } },
     );
 
     await sqlite.models.User.upsert({ value: 'example' }, { where: { id: 1 } });
@@ -410,7 +395,6 @@ sqlite.models.User.findAll({
 - **`include`**: Array of associated models to include.
   The `include` parameter allows you to specify associated models to join in queries. It is important to include the queried model's primary key in the attributes
   Each include object should define:
-
     - `model`: The associated model name.
     - `on`: The join condition (array of column names from parent and child models).
     - `attributes`: The columns to select from the associated model.
@@ -499,7 +483,6 @@ The `queryInterface` provides methods for database schema changes such as creati
 - `dropConstraint`
 
     To work around unsupported methods you can do the following in your migration:
-
     1. Define a new table with the changed column or new constraints (example: `new_users`)
     2. copy old table into new (get all `users` and add to `new_users`)
     3. Drop old table
