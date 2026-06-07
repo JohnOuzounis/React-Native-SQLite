@@ -1,158 +1,111 @@
-const getForeignKeyName = (model, options, sqlite) => {
-    return (
-        options.foreignKey || {
-            name: `${model.modelName.toLowerCase()}Id`,
-            type: sqlite.datatypes.INTEGER,
-        }
-    );
-};
+const getForeignKeyName = (model, options = {}) => ({
+    name:
+        typeof options.foreignKey === 'string'
+            ? options.foreignKey
+            : options.foreignKey?.name || `${model.modelName.toLowerCase()}Id`,
+});
 
-const belongsTo = params => {
-    const { model, args, sqlite } = params;
-    const [target, options = {}] = args;
-    const targetModel = sqlite.models[target];
+const getAlias = (model, options = {}) =>
+    options.as || model.modelName.toLowerCase();
 
-    const foreignKey = getForeignKeyName(targetModel, options, sqlite);
-    const [referenceKey] = Object.entries(targetModel.attributes).find(
-        ([, attribute]) => attribute.primaryKey === true
-    ) || ['id'];
+const getPrimaryKey = model =>
+    Object.entries(model.attributes).find(
+        ([, attribute]) => attribute.primaryKey,
+    )?.[0] || 'id';
 
-    if (!model.attributes[foreignKey.name]) {
-        model.attributes[foreignKey.name] = {
-            type: foreignKey.type,
-        };
+const getTargetModel = (sqlite, target) => {
+    if (typeof target === 'string') {
+        return sqlite.models[target];
     }
 
-    model.associations = model.associations || {};
-    model.associations.belongsTo = model.associations.belongsTo || [];
+    if (typeof target === 'object' && target.modelName) {
+        return sqlite.models[target.modelName];
+    }
 
-    model.associations.belongsTo.push({
-        target: targetModel.modelName,
-        foreignKey: foreignKey.name,
-        referenceKey,
-        onDelete: options.onDelete || 'SET NULL',
-        onUpdate: 'CASCADE',
-    });
+    throw new Error(`Invalid target model: ${target}`);
 };
 
-const belongsToMany = params => {
-    const { model, args, sqlite } = params;
+const registerAssociation = (
+    sourceModel,
+    alias,
+    associationType,
+    targetModel,
+    foreignKey,
+    referenceKey,
+) => {
+    sourceModel.associations ??= {};
+
+    sourceModel.associations[targetModel.modelName] = {
+        as: alias,
+        associationType,
+        isSingleAssociation:
+            associationType === 'belongsTo' || associationType === 'hasOne',
+        isMultiAssociation:
+            associationType === 'hasMany' ||
+            associationType === 'belongsToMany',
+        target: targetModel,
+        foreignKey,
+        referenceKey,
+    };
+};
+
+const belongsTo = ({ model, args, sqlite }) => {
     const [target, options = {}] = args;
-    const targetModel = sqlite.models[target];
 
-    const joinTable =
-        options.through || `${model.modelName}_${targetModel.modelName}`;
+    const targetModel = getTargetModel(sqlite, target);
 
-    const sourceKey = Object.entries(model.attributes).find(
-        ([, attribute]) => attribute.primaryKey === true
+    const foreignKey = getForeignKeyName(targetModel, options);
+    const referenceKey = getPrimaryKey(targetModel);
+    const as = getAlias(targetModel, options);
+
+    registerAssociation(
+        model,
+        as,
+        'belongsTo',
+        targetModel,
+        foreignKey.name,
+        referenceKey,
     );
+};
 
-    const targetKey = Object.entries(targetModel.attributes).find(
-        ([, attribute]) => attribute.primaryKey === true
+const hasOne = ({ model, args, sqlite }) => {
+    const [target, options = {}] = args;
+
+    const targetModel = getTargetModel(sqlite, target);
+
+    const foreignKey = getForeignKeyName(model, options);
+    const referenceKey = getPrimaryKey(model);
+    const as = getAlias(targetModel, options);
+
+    registerAssociation(
+        model,
+        as,
+        'hasOne',
+        targetModel,
+        foreignKey.name,
+        referenceKey,
     );
-
-    const [sourceKeyName, sourceKeyConfig] = sourceKey || [
-        `${model.modelName.toLowerCase()}Id`,
-        { type: sqlite.datatypes.INTEGER },
-    ];
-    const [targetKeyName, targetKeyConfig] = targetKey || [
-        `${targetModel.modelName.toLowerCase()}Id`,
-        { type: sqlite.datatypes.INTEGER },
-    ];
-
-    model.associations = model.associations || {};
-    model.associations.belongsToMany = model.associations.belongsToMany || [];
-
-    targetModel.associations = targetModel.associations || {};
-    targetModel.associations.belongsToMany =
-        targetModel.associations.belongsToMany || [];
-
-    model.associations.belongsToMany.push({
-        target: targetModel.modelName,
-        through: joinTable,
-        sourceKey: sourceKeyName,
-        foreignKey: targetKeyName,
-    });
-
-    targetModel.associations.belongsToMany.push({
-        target: model.modelName,
-        through: joinTable,
-        sourceKey: targetKeyName,
-        foreignKey: sourceKeyName,
-    });
-
-    if (sqlite.models[joinTable]) return;
-
-    sqlite.define(joinTable, {
-        [sourceKeyName]: sourceKeyConfig,
-        [targetKeyName]: targetKeyConfig,
-        ...options.attributes,
-    });
-
-    sqlite.models[joinTable].associations.belongsTo =
-        sqlite.models[joinTable].associations.belongsTo || [];
-
-    const [sourceReferenceKey] = sourceKey ?? ['id'];
-    sqlite.models[joinTable].associations.belongsTo.push({
-        target: model.modelName,
-        foreignKey: sourceKeyName,
-        referenceKey: sourceReferenceKey,
-        onDelete: options.onDelete || 'SET NULL',
-        onUpdate: 'CASCADE',
-    });
-
-    const [targetReferenceKey] = targetKey ?? ['id'];
-    sqlite.models[joinTable].associations.belongsTo.push({
-        target: targetModel.modelName,
-        foreignKey: targetKeyName,
-        referenceKey: targetReferenceKey,
-        onDelete: options.onDelete || 'SET NULL',
-        onUpdate: 'CASCADE',
-    });
 };
 
-const hasOne = params => {
-    const { model, args, sqlite } = params;
+const hasMany = ({ model, args, sqlite }) => {
     const [target, options = {}] = args;
-    const targetModel = sqlite.models[target];
 
-    const foreignKey = getForeignKeyName(targetModel, options, sqlite);
-    const [referenceKey] = Object.entries(targetModel.attributes).find(
-        ([, attribute]) => attribute.primaryKey === true
-    ) || ['id'];
+    const targetModel = getTargetModel(sqlite, target);
 
-    model.associations = model.associations || {};
-    model.associations.hasOne = model.associations.hasOne || [];
+    const foreignKey = getForeignKeyName(model, options);
+    const referenceKey = getPrimaryKey(model);
+    const as = getAlias(targetModel, options);
 
-    model.associations.hasOne.push({
-        target: targetModel.modelName,
-        foreignKey: foreignKey.name,
+    registerAssociation(
+        model,
+        as,
+        'hasMany',
+        targetModel,
+        foreignKey.name,
         referenceKey,
-        onDelete: options.onDelete || 'SET NULL',
-        onUpdate: 'CASCADE',
-    });
+    );
 };
 
-const hasMany = params => {
-    const { model, args, sqlite } = params;
-    const [target, options = {}] = args;
-    const targetModel = sqlite.models[target];
-
-    const foreignKey = getForeignKeyName(targetModel, options, sqlite);
-    const [referenceKey] = Object.entries(targetModel.attributes).find(
-        ([, attribute]) => attribute.primaryKey === true
-    ) || ['id'];
-
-    model.associations = model.associations || {};
-    model.associations.hasMany = model.associations.hasMany || [];
-
-    model.associations.hasMany.push({
-        target: targetModel.modelName,
-        foreignKey: foreignKey.name,
-        referenceKey,
-        onDelete: options.onDelete || 'SET NULL',
-        onUpdate: 'CASCADE',
-    });
-};
+const belongsToMany = ({ model, args, sqlite }) => {};
 
 export default { belongsTo, belongsToMany, hasOne, hasMany };
