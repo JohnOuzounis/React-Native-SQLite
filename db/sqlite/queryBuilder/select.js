@@ -10,7 +10,6 @@ import {
 
 const generateSelect = (model, options) => {
     const { where, attributes, include, order, limit, offset } = options;
-
     const columns = generateColumns(attributes, include);
 
     const whereOptions = model.paranoid

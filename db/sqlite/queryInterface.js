@@ -35,7 +35,7 @@ const queryInterfaceMethods = {
             'DROPCOLUMN',
             {
                 columnName,
-            }
+            },
         );
 
         await sqlite.instance.execAsync(`${dropColumnQuery}`);
@@ -100,7 +100,7 @@ const queryInterfaceMethods = {
     },
 
     bulkDestroy: async ({ sqlite, args }) => {
-        const [modelName, options] = args;
+        const [modelName, options = {}] = args;
         const deleteQuery = queryBuilder.delete({ modelName }, options);
 
         await sqlite.instance.execAsync(`${deleteQuery}`);
