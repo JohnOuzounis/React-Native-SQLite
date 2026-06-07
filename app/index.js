@@ -4,6 +4,7 @@ import { DbProvider, useDb } from '../context/DbProvider';
 import { connectToDb } from '../db/connectToDb';
 import { getModels } from '../utils/models';
 import Loader from '../components/loader/Loader';
+import { sqlite } from '../db/database';
 
 export default function App() {
     return (
@@ -30,16 +31,51 @@ export function Test() {
     useEffect(() => {
         async function setup() {
             const result = await db.instance.getFirstAsync(
-                'SELECT sqlite_version()'
+                'SELECT sqlite_version()',
             );
             setVersion(result['sqlite_version()']);
 
-            const { User } = getModels();
+            const { Order } = getModels();
 
-            await User.create({
-                username: 'name',
+            const orders = await Order.findAll({
+                attributes: [['Orders.id', 'id'], 'orderDate', 'total'],
+                unique: 'id',
+                include: [
+                    {
+                        model: 'Customers',
+                        unique: 'email',
+                        attributes: ['name', 'email'],
+                        on: ['customerId', 'id'],
+                        as: 'customer',
+                    },
+                    {
+                        model: 'OrderItems',
+                        unique: 'itemId',
+                        attributes: [
+                            ['OrderItems.id', 'itemId'],
+                            'quantity',
+                            'unitPrice',
+                        ],
+                        on: ['id', 'orderId'],
+                        as: 'items',
+                        include: [
+                            {
+                                model: 'Products',
+                                unique: 'productId',
+                                attributes: [
+                                    ['Products.id', 'productId'],
+                                    ['Products.name', 'productName'],
+                                    'price',
+                                ],
+                                on: ['productId', 'id'],
+                                as: 'product',
+                            },
+                        ],
+                    },
+                ],
             });
-            console.log(await User.findAll());
+
+            console.log(JSON.stringify(orders, null, 2));
         }
         setup().catch(console.log);
     }, []);

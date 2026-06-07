@@ -1,7 +1,7 @@
 import { sqlite } from '../db/database';
 
-const User = sqlite.define(
-    'Users',
+const Customer = sqlite.define(
+    'Customers',
     {
         id: {
             type: sqlite.datatypes.INTEGER,
@@ -9,40 +9,120 @@ const User = sqlite.define(
             autoIncrement: true,
             allowNull: false,
         },
-        username: {
+        name: {
+            type: sqlite.datatypes.STRING,
+            allowNull: false,
+        },
+        email: {
             type: sqlite.datatypes.STRING,
             allowNull: false,
             unique: true,
         },
-        createdAt: {
-            type: sqlite.datatypes.DATE,
-            defaultValue: sqlite.fn('NOW'),
-            allowNull: false,
-        },
-        updatedAt: {
-            type: sqlite.datatypes.DATE,
-            defaultValue: sqlite.fn('NOW'),
-            allowNull: false,
-        },
     },
-    { localtime: true, paranoid: true }
+    { timestamps: false },
 );
 
-const Food = sqlite.define('Food', {
-    protein: {
-        type: sqlite.datatypes.INTEGER,
+const Product = sqlite.define(
+    'Products',
+    {
+        id: {
+            type: sqlite.datatypes.INTEGER,
+            primaryKey: true,
+            autoIncrement: true,
+            allowNull: false,
+        },
+        name: {
+            type: sqlite.datatypes.STRING,
+            allowNull: false,
+        },
+        price: {
+            type: sqlite.datatypes.INTEGER,
+            allowNull: false,
+        },
+        stock: {
+            type: sqlite.datatypes.INTEGER,
+            defaultValue: 0,
+        },
     },
-    fat: {
-        type: sqlite.datatypes.INTEGER,
+    { timestamps: false },
+);
+
+const Order = sqlite.define(
+    'Orders',
+    {
+        id: {
+            type: sqlite.datatypes.INTEGER,
+            primaryKey: true,
+            autoIncrement: true,
+            allowNull: false,
+        },
+        orderDate: {
+            type: sqlite.datatypes.DATE,
+            defaultValue: sqlite.datatypes.NOW,
+        },
+        total: {
+            type: sqlite.datatypes.INTEGER,
+            defaultValue: 0,
+        },
     },
-    carb: {
-        type: sqlite.datatypes.INTEGER,
+    { timestamps: false },
+);
+
+const OrderItem = sqlite.define(
+    'OrderItems',
+    {
+        id: {
+            type: sqlite.datatypes.INTEGER,
+            primaryKey: true,
+            autoIncrement: true,
+            allowNull: false,
+        },
+        quantity: {
+            type: sqlite.datatypes.INTEGER,
+            allowNull: false,
+        },
+        unitPrice: {
+            type: sqlite.datatypes.INTEGER,
+            allowNull: false,
+        },
     },
+    { timestamps: false },
+);
+
+// Customer ↔ Order
+Customer.hasMany(Order, {
+    foreignKey: 'customerId',
+    onDelete: 'CASCADE',
+});
+
+Order.belongsTo(Customer, {
+    foreignKey: 'customerId',
+});
+
+// Order ↔ OrderItem
+Order.hasMany(OrderItem, {
+    foreignKey: 'orderId',
+    onDelete: 'CASCADE',
+});
+
+OrderItem.belongsTo(Order, {
+    foreignKey: 'orderId',
+});
+
+// Product ↔ OrderItem
+Product.hasMany(OrderItem, {
+    foreignKey: 'productId',
+});
+
+OrderItem.belongsTo(Product, {
+    foreignKey: 'productId',
 });
 
 const models = {
-    User,
-    Food,
+    Customer,
+    Product,
+    Order,
+    OrderItem,
 };
 
 export default models;
