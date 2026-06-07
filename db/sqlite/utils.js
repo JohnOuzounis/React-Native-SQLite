@@ -111,7 +111,7 @@ export const generateGroupByClause = (model, group) => {
 export const generateIncludeClause = (modelName, include = []) => {
     if (include.length === 0) return '';
 
-    const processInclude = includeArray => {
+    const processInclude = (includeArray, parentModel = modelName) => {
         return includeArray
             .map(joinObj => {
                 const {
@@ -119,14 +119,20 @@ export const generateIncludeClause = (modelName, include = []) => {
                     on,
                     type = 'INNER',
                     include: nestedInclude = [],
-                    target = modelName,
+                    target = parentModel,
                 } = joinObj;
+
+                if (!Array.isArray(on)) {
+                    throw new Error(
+                        `Include "${model}" is missing a valid "on" clause. Received: ${JSON.stringify(on)}`,
+                    );
+                }
                 const [leftCol, rightCol] = on;
 
                 let joinClause = ` ${type.toUpperCase()} JOIN ${model} ON ${target}.${leftCol} = ${model}.${rightCol}`;
 
                 if (nestedInclude.length) {
-                    joinClause += processInclude(nestedInclude);
+                    joinClause += processInclude(nestedInclude, model);
                 }
 
                 return joinClause;
@@ -170,88 +176,133 @@ export const getLastUpdatedRow = (model, options) => {
     return getLastRowQuery;
 };
 
-export const getGroupedResults = (results, model, include, sqlite) => {
-    if (!include) return results;
-
-    const pk = Object.keys(model.attributes).find(
-        attr => model.attributes[attr].primaryKey,
+const getPrimaryKey = (model, attributes) => {
+    const pkEntry = Object.entries(model.attributes).find(
+        ([, attribute]) => attribute.primaryKey === true,
     );
 
-    const processInclude = (
-        groupedResult,
-        result,
-        includeArray,
-        parentModel,
-    ) => {
-        includeArray.forEach(inc => {
+    return pkEntry ? pkEntry[0] : 'id';
+};
+export const getGroupedResults = (results, model, options = {}, sqlite) => {
+    const { include, attributes, unique } = options;
+
+    if (!include || !include.length) return results;
+
+    const getNodeData = (row, attrs) => {
+        const data = {};
+        for (const attr of attrs) {
+            if (Array.isArray(attr)) {
+                data[attr[1]] = row[attr[1]];
+            } else {
+                data[attr] = row[attr];
+            }
+        }
+        return data;
+    };
+
+    const getModelDef = (joinObj, sqlite) => {
+        const modelRef = joinObj.model;
+        const modelName =
+            typeof modelRef === 'string' ? modelRef : modelRef.modelName;
+        return sqlite.models[modelName];
+    };
+
+    // Recursive helper: ensures that `parentNode` has the correct children
+    // according to the `includes` tree, using data from `row`.
+    const processIncludes = (parentNode, row, includes, parentModel) => {
+        for (const joinObj of includes) {
             const {
-                model: incModel,
-                attributes: incAttributes,
-                on,
-                as = incModel,
-                target = parentModel.modelName,
+                as,
+                unique: childUnique,
+                attributes: joinAttrs,
                 include: nestedInclude = [],
-            } = inc;
+                model: joinModel,
+            } = joinObj;
 
-            const groupModel = sqlite.models[target];
-            const foreignKey = on[1];
+            const association = parentModel.associations?.[joinModel];
 
-            const hasOneAssoc = groupModel.associations?.hasOne?.find(
-                assoc =>
-                    assoc.target === incModel &&
-                    assoc.foreignKey === foreignKey,
-            );
+            if (!association) {
+                throw new Error(
+                    `Association "${as}" not found on model "${parentModel.modelName}"`,
+                );
+            }
 
-            const hasManyAssoc = groupModel.associations?.hasMany?.find(
-                assoc =>
-                    assoc.target === incModel &&
-                    assoc.foreignKey === foreignKey,
-            );
+            const childModel = association.target;
+            const childAttrs = Object.keys(childModel.attributes);
+            const isMany = association.isMultiAssociation;
 
-            const belongsToManyAssoc = sqlite.models[
-                incModel
-            ].associations?.belongsToMany?.find(
-                assoc => assoc.through === target,
-            );
+            const childId = row[childUnique];
 
-            const relatedItem = {};
-            incAttributes.forEach(attr => {
-                const key = Array.isArray(attr) ? attr[1] : attr;
-                relatedItem[key] = result[key];
-                delete groupedResult[key];
-            });
+            if (childId === null || childId === undefined) {
+                continue;
+            }
 
-            if (hasOneAssoc) {
-                groupedResult[as] = relatedItem;
-            } else if (hasManyAssoc || belongsToManyAssoc) {
-                if (!groupedResult[as]) {
-                    groupedResult[as] = [];
+            parentNode.__children ??= {};
+            parentNode.__children[as] ??= new Map();
+
+            const childMap = parentNode.__children[as];
+
+            let childNode = childMap.get(childId);
+
+            if (!childNode) {
+                childNode = getNodeData(row, joinAttrs || childAttrs);
+
+                childMap.set(childId, childNode);
+
+                if (isMany) {
+                    parentNode[as] ??= [];
+                    parentNode[as].push(childNode);
+                } else {
+                    parentNode[as] = childNode;
                 }
-
-                groupedResult[as].push(relatedItem);
             }
 
             if (nestedInclude.length) {
-                processInclude(
-                    relatedItem,
-                    result,
-                    nestedInclude,
-                    sqlite.models[incModel],
-                );
+                processIncludes(childNode, row, nestedInclude, childModel);
             }
-        });
+        }
     };
 
-    return results.reduce((acc, result) => {
-        let groupedResult = acc.find(item => item[pk] === result[pk]);
+    const rootModel = sqlite.models[model.modelName];
+    const rootAttrs = Object.keys(rootModel.attributes);
+    const rootMap = new Map();
 
-        if (!groupedResult) {
-            groupedResult = { ...result };
-            acc.push(groupedResult);
+    for (const row of results) {
+        const rootId = row[unique];
+        let rootNode = rootMap.get(rootId);
+
+        if (!rootNode) {
+            rootNode = getNodeData(row, attributes || rootAttrs);
+            rootMap.set(rootId, rootNode);
         }
 
-        processInclude(groupedResult, result, include, model);
+        // Process all includes (including nested) for this root node
+        processIncludes(rootNode, row, include, rootModel);
+    }
 
-        return acc;
-    }, []);
+    // Remove internal __children property from all nodes
+    const clean = node => {
+        if (node.__children) {
+            for (const key of Object.keys(node.__children)) {
+                // Recursively clean grandchildren
+                for (const childNode of node.__children[key].values()) {
+                    clean(childNode);
+                }
+            }
+            delete node.__children;
+        }
+        // Also clean any array children that might have __children (they will be cleaned by recursion)
+        for (const prop of Object.keys(node)) {
+            if (Array.isArray(node[prop])) {
+                node[prop].forEach(child => {
+                    if (typeof child === 'object' && child !== null)
+                        clean(child);
+                });
+            }
+        }
+    };
+
+    const result = Array.from(rootMap.values());
+    for (const root of result) clean(root);
+    return result;
 };
