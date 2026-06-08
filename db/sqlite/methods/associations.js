@@ -106,6 +106,41 @@ const hasMany = ({ model, args, sqlite }) => {
     );
 };
 
-const belongsToMany = ({ model, args, sqlite }) => {};
+const belongsToMany = ({ model, args, sqlite }) => {
+    const [target, options = {}] = args;
+
+    const throughModel = getTargetModel(sqlite, options.through);
+    const targetModel = getTargetModel(sqlite, target);
+
+    const sourceForeignKey =
+        options.foreignKey || `${model.modelName.toLowerCase()}Id`;
+
+    const targetForeignKey =
+        options.otherKey || `${targetModel.modelName.toLowerCase()}Id`;
+
+    hasMany({
+        model,
+        sqlite,
+        args: [throughModel, { foreignKey: sourceForeignKey }],
+    });
+
+    hasMany({
+        model: targetModel,
+        sqlite,
+        args: [throughModel, { foreignKey: targetForeignKey }],
+    });
+
+    belongsTo({
+        model: throughModel,
+        sqlite,
+        args: [model, { foreignKey: sourceForeignKey }],
+    });
+
+    belongsTo({
+        model: throughModel,
+        sqlite,
+        args: [targetModel, { foreignKey: targetForeignKey }],
+    });
+};
 
 export default { belongsTo, belongsToMany, hasOne, hasMany };
