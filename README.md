@@ -393,35 +393,27 @@ sqlite.models.User.findAll({
     ```
 
 - **`include`**: Array of associated models to include.
-  The `include` parameter allows you to specify associated models to join in queries. It is important to include the queried model's primary key in the attributes
-  Each include object should define:
+  The include parameter allows you to specify associated models to join in queries.
+
+    Each include object may contain:
     - `model`: The associated model name.
-    - `on`: The join condition (array of column names from parent and child models).
-    - `attributes`: The columns to select from the associated model.
+    - `attributes`: Columns to select from the associated model.
+    - `on`: (Optional) Custom join condition as [parentColumn, childColumn].
     - `as`: (Optional) Alias for the associated model.
-    - `target`: (Optional) Specifies the parent model; defaults to the queried model.
-    - `include`: (Optional) Nested associations for deeper relationships.
+    - `target`: (Optional) Parent model for the join; defaults to the queried model.
+    - `include`: (Optional) Nested associations.
+
+    Important: When using `include`, the primary key of the root model and every included model must be selected in `attributes` (either directly or with an alias). Primary keys are used internally to group joined rows back into nested objects. Omitting a model's primary key may result in duplicated or incorrectly grouped results.
 
     Example Usage:
 
     ```javascript
-    const res = await User.findAll({
-        attributes: ['Users.id', 'username'],
+    const orders = await Order.findAll({
+        attributes: [['Orders.id', 'id'], 'orderDate', 'total'],
         include: [
             {
-                model: 'Posts',
-                on: ['id', 'userId'],
-                attributes: ['id', 'title'],
-                as: 'posts',
-                include: [
-                    {
-                        model: 'Comments',
-                        on: ['id', 'postId'],
-                        attributes: ['id', 'content'],
-                        target: 'Posts',
-                        as: 'comments',
-                    },
-                ],
+                model: 'Customers',
+                attributes: [['Customers.id', 'customerId'], 'name', 'email'],
             },
         ],
     });
