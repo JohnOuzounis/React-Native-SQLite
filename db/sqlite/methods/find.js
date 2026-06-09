@@ -5,7 +5,7 @@ import { getGroupedResults } from '../utils';
 const findAll = async params => {
     const { model, args, sqlite } = params;
     const [options = {}] = args;
-    const selectQuery = builder.select(model, options);
+    const selectQuery = builder.select(model, options, sqlite);
     logger.log(selectQuery);
 
     const results = await sqlite.instance.getAllAsync(`${selectQuery}`);
@@ -25,7 +25,7 @@ const findByPk = async params => {
     options.where = {
         [sourceKey]: pk,
     };
-    const selectQuery = builder.select(model, options);
+    const selectQuery = builder.select(model, options, sqlite);
     logger.log(selectQuery);
 
     const result = await sqlite.instance.getAllAsync(`${selectQuery}`);
@@ -38,7 +38,7 @@ const findByPk = async params => {
 const findOne = async params => {
     const { model, args, sqlite } = params;
     const [options = {}] = args;
-    const selectQuery = builder.select(model, { ...options, limit: 1 });
+    const selectQuery = builder.select(model, { ...options, limit: 1 }, sqlite);
     logger.log(selectQuery);
 
     const result = await sqlite.instance.getAllAsync(`${selectQuery}`);
@@ -51,7 +51,7 @@ const findOne = async params => {
 const findAndCountAll = async params => {
     const { model, args, sqlite } = params;
     const [options = {}] = args;
-    const query = builder.selectCount(model, options);
+    const query = builder.selectCount(model, options, sqlite);
     logger.log(query);
 
     return await sqlite.instance.getAllAsync(`${query}`);

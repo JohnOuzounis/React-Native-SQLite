@@ -13,6 +13,32 @@ const parseValue = value => {
     return value;
 };
 
+const getPrimaryKey = (model, attributes) => {
+    const pkEntry = Object.entries(model.attributes).find(
+        ([, attribute]) => attribute.primaryKey === true,
+    );
+
+    return pkEntry ? pkEntry[0] : 'id';
+};
+
+const getSelectedPrimaryKeyAlias = (model, attrs) => {
+    const pk = getPrimaryKey(model);
+
+    for (const attr of attrs) {
+        if (Array.isArray(attr)) {
+            const [source, alias] = attr;
+
+            if (source === pk || source.endsWith(`.${pk}`)) {
+                return alias;
+            }
+        } else if (attr === pk) {
+            return pk;
+        }
+    }
+
+    return pk;
+};
+
 export const generateColumns = (attributes, include) => {
     if (!attributes || attributes.length === 0) return '*';
 
@@ -108,7 +134,10 @@ export const generateGroupByClause = (model, group) => {
         : '';
 };
 
-export const generateIncludeClause = (modelName, include = []) => {
+export const getAssociation = (modelName, associationName, sqlite) =>
+    sqlite.models[modelName]?.associations?.[associationName];
+
+export const generateIncludeClause = (modelName, include = [], sqlite) => {
     if (include.length === 0) return '';
 
     const processInclude = (includeArray, parentModel = modelName) => {
@@ -116,20 +145,48 @@ export const generateIncludeClause = (modelName, include = []) => {
             .map(joinObj => {
                 const {
                     model,
-                    on,
+                    on: joinOn,
                     type = 'INNER',
                     include: nestedInclude = [],
                     target = parentModel,
                 } = joinObj;
 
-                if (!Array.isArray(on)) {
+                const association = getAssociation(parentModel, model, sqlite);
+                if (!association) {
                     throw new Error(
-                        `Include "${model}" is missing a valid "on" clause. Received: ${JSON.stringify(on)}`,
+                        `Association "${model}" not found on model "${parentModel}"`,
                     );
                 }
-                const [leftCol, rightCol] = on;
 
-                let joinClause = ` ${type.toUpperCase()} JOIN ${model} ON ${target}.${leftCol} = ${model}.${rightCol}`;
+                let leftSide;
+                let rightSide;
+
+                if (joinOn) {
+                    const [leftCol, rightCol] = joinOn;
+
+                    leftSide = `${target}.${leftCol}`;
+                    rightSide = `${model}.${rightCol}`;
+                } else {
+                    switch (association.associationType) {
+                        case 'belongsTo':
+                            leftSide = `${target}.${association.foreignKey}`;
+                            rightSide = `${model}.${association.referenceKey}`;
+                            break;
+
+                        case 'hasOne':
+                        case 'hasMany':
+                            leftSide = `${target}.${association.referenceKey}`;
+                            rightSide = `${model}.${association.foreignKey}`;
+                            break;
+
+                        default:
+                            throw new Error(
+                                `Unsupported association type: ${association.associationType}`,
+                            );
+                    }
+                }
+
+                let joinClause = ` ${type.toUpperCase()} JOIN ${model} ON ${leftSide} = ${rightSide}`;
 
                 if (nestedInclude.length) {
                     joinClause += processInclude(nestedInclude, model);
@@ -176,15 +233,8 @@ export const getLastUpdatedRow = (model, options) => {
     return getLastRowQuery;
 };
 
-const getPrimaryKey = (model, attributes) => {
-    const pkEntry = Object.entries(model.attributes).find(
-        ([, attribute]) => attribute.primaryKey === true,
-    );
-
-    return pkEntry ? pkEntry[0] : 'id';
-};
 export const getGroupedResults = (results, model, options = {}, sqlite) => {
-    const { include, attributes, unique } = options;
+    const { include, attributes } = options;
 
     if (!include || !include.length) return results;
 
@@ -212,23 +262,31 @@ export const getGroupedResults = (results, model, options = {}, sqlite) => {
     const processIncludes = (parentNode, row, includes, parentModel) => {
         for (const joinObj of includes) {
             const {
-                as,
-                unique: childUnique,
+                as: joinAs,
                 attributes: joinAttrs,
                 include: nestedInclude = [],
                 model: joinModel,
             } = joinObj;
 
-            const association = parentModel.associations?.[joinModel];
+            const association = getAssociation(
+                parentModel.modelName,
+                joinModel,
+                sqlite,
+            );
 
             if (!association) {
                 throw new Error(
-                    `Association "${as}" not found on model "${parentModel.modelName}"`,
+                    `Association "${joinModel}" not found on model "${parentModel.modelName}"`,
                 );
             }
+            const as = joinAs || association.as;
 
             const childModel = association.target;
             const childAttrs = Object.keys(childModel.attributes);
+            const childUnique = getSelectedPrimaryKeyAlias(
+                childModel,
+                joinAttrs || childAttrs,
+            );
             const isMany = association.isMultiAssociation;
 
             const childId = row[childUnique];
@@ -267,8 +325,13 @@ export const getGroupedResults = (results, model, options = {}, sqlite) => {
     const rootAttrs = Object.keys(rootModel.attributes);
     const rootMap = new Map();
 
+    const rootUnique = getSelectedPrimaryKeyAlias(
+        rootModel,
+        attributes || rootAttrs,
+    );
+
     for (const row of results) {
-        const rootId = row[unique];
+        const rootId = row[rootUnique];
         let rootNode = rootMap.get(rootId);
 
         if (!rootNode) {
