@@ -39,36 +39,30 @@ export function Test() {
 
             const orders = await Order.findAll({
                 attributes: [['Orders.id', 'id'], 'orderDate', 'total'],
-                unique: 'id',
                 include: [
                     {
                         model: 'Customers',
-                        unique: 'email',
-                        attributes: ['name', 'email'],
-                        on: ['customerId', 'id'],
-                        as: 'customer',
+                        attributes: [
+                            ['Customers.id', 'customerId'],
+                            'name',
+                            'email',
+                        ],
                     },
                     {
                         model: 'OrderItems',
-                        unique: 'itemId',
                         attributes: [
                             ['OrderItems.id', 'itemId'],
                             'quantity',
                             'unitPrice',
                         ],
-                        on: ['id', 'orderId'],
-                        as: 'items',
                         include: [
                             {
                                 model: 'Products',
-                                unique: 'productId',
                                 attributes: [
                                     ['Products.id', 'productId'],
                                     ['Products.name', 'productName'],
                                     'price',
                                 ],
-                                on: ['productId', 'id'],
-                                as: 'product',
                             },
                         ],
                     },

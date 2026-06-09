@@ -92,7 +92,6 @@ const OrderItem = sqlite.define(
 // Customer ↔ Order
 Customer.hasMany(Order, {
     foreignKey: 'customerId',
-    onDelete: 'CASCADE',
 });
 
 Order.belongsTo(Customer, {
@@ -102,7 +101,6 @@ Order.belongsTo(Customer, {
 // Order ↔ OrderItem
 Order.hasMany(OrderItem, {
     foreignKey: 'orderId',
-    onDelete: 'CASCADE',
 });
 
 OrderItem.belongsTo(Order, {
