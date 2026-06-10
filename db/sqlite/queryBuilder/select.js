@@ -6,7 +6,7 @@ import {
     generateOffsetClause,
     generateOrderByClause,
     generateWhereClause,
-} from '../utils';
+} from '../utils/query-utils';
 
 const generateSelect = (model, options, sqlite) => {
     const { where, attributes, include, order, limit, offset } = options;

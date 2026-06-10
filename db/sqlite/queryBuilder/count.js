@@ -1,11 +1,14 @@
-import { generateGroupByClause, generateWhereClause } from "../utils";
+import {
+    generateGroupByClause,
+    generateWhereClause,
+} from '../utils/query-utils';
 
 const generateCount = (modelName, where, as, groupBy) => {
-  const groupByClause = generateGroupByClause(modelName, groupBy);
-  const whereClause = generateWhereClause(modelName, where);
-  const countQuery = `SELECT COUNT(*) as ${as} FROM ${modelName}${whereClause}${groupByClause};`;
+    const groupByClause = generateGroupByClause(modelName, groupBy);
+    const whereClause = generateWhereClause(modelName, where);
+    const countQuery = `SELECT COUNT(*) as ${as} FROM ${modelName}${whereClause}${groupByClause};`;
 
-  return countQuery;
+    return countQuery;
 };
 
 export default generateCount;

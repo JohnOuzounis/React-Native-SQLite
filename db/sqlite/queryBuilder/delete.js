@@ -1,4 +1,4 @@
-import { generateWhereClause } from '../utils';
+import { generateWhereClause } from '../utils/query-utils';
 import generateUpdate from './update';
 
 const generateDelete = (model, options) => {
@@ -8,7 +8,7 @@ const generateDelete = (model, options) => {
         const updateQuery = generateUpdate(
             model,
             { deletedAt: new Date() },
-            options
+            options,
         );
         return updateQuery;
     }

@@ -5,7 +5,7 @@ import {
     generateOffsetClause,
     generateOrderByClause,
     generateWhereClause,
-} from '../utils';
+} from '../utils/query-utils';
 
 const generateSelectCount = (model, options, sqlite) => {
     const {

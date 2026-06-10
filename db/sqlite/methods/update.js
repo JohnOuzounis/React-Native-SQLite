@@ -1,6 +1,7 @@
 import logger from '../logger/logger';
 import builder from '../queryBuilder';
-import { getLastUpdatedRow } from '../utils';
+
+import { getLastUpdatedRow } from '../utils/query-utils';
 
 const update = async params => {
     const { model, args, sqlite } = params;

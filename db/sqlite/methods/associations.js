@@ -1,29 +1,9 @@
-const getForeignKeyName = (model, options = {}) => ({
-    name:
-        typeof options.foreignKey === 'string'
-            ? options.foreignKey
-            : options.foreignKey?.name || `${model.modelName.toLowerCase()}Id`,
-});
-
-const getAlias = (model, options = {}) =>
-    options.as || model.modelName.toLowerCase();
-
-const getPrimaryKey = model =>
-    Object.entries(model.attributes).find(
-        ([, attribute]) => attribute.primaryKey,
-    )?.[0] || 'id';
-
-const getTargetModel = (sqlite, target) => {
-    if (typeof target === 'string') {
-        return sqlite.models[target];
-    }
-
-    if (typeof target === 'object' && target.modelName) {
-        return sqlite.models[target.modelName];
-    }
-
-    throw new Error(`Invalid target model: ${target}`);
-};
+import {
+    getTargetModel,
+    getAlias,
+    getForeignKeyName,
+    getPrimaryKey,
+} from '../utils/association-utils';
 
 const registerAssociation = (
     sourceModel,
@@ -35,79 +15,60 @@ const registerAssociation = (
 ) => {
     sourceModel.associations ??= {};
 
-    sourceModel.associations[targetModel.modelName] = {
+    if (sourceModel.associations[alias]) {
+        throw new Error(
+            `Association alias "${alias}" already exists on "${sourceModel.modelName}"`,
+        );
+    }
+
+    sourceModel.associations[alias] = {
         as: alias,
         associationType,
-        isSingleAssociation:
-            associationType === 'belongsTo' || associationType === 'hasOne',
-        isMultiAssociation:
-            associationType === 'hasMany' ||
-            associationType === 'belongsToMany',
         target: targetModel,
         foreignKey,
         referenceKey,
     };
 };
 
-const belongsTo = ({ model, args, sqlite }) => {
+const createAssociation =
+    associationType =>
+    ({ model, args, sqlite }) => {
+        const [target, options = {}] = args;
+
+        const targetModel = getTargetModel(sqlite, target);
+
+        const foreignKey =
+            associationType === 'belongsTo'
+                ? getForeignKeyName(targetModel, options)
+                : getForeignKeyName(model, options);
+
+        const referenceKey =
+            associationType === 'belongsTo'
+                ? getPrimaryKey(targetModel)
+                : getPrimaryKey(model);
+
+        registerAssociation(
+            model,
+            getAlias(targetModel, options),
+            associationType,
+            targetModel,
+            foreignKey,
+            referenceKey,
+        );
+    };
+
+export const belongsTo = createAssociation('belongsTo');
+export const hasOne = createAssociation('hasOne');
+export const hasMany = createAssociation('hasMany');
+
+export const belongsToMany = ({ model, args, sqlite }) => {
     const [target, options = {}] = args;
 
-    const targetModel = getTargetModel(sqlite, target);
-
-    const foreignKey = getForeignKeyName(targetModel, options);
-    const referenceKey = getPrimaryKey(targetModel);
-    const as = getAlias(targetModel, options);
-
-    registerAssociation(
-        model,
-        as,
-        'belongsTo',
-        targetModel,
-        foreignKey.name,
-        referenceKey,
-    );
-};
-
-const hasOne = ({ model, args, sqlite }) => {
-    const [target, options = {}] = args;
-
-    const targetModel = getTargetModel(sqlite, target);
-
-    const foreignKey = getForeignKeyName(model, options);
-    const referenceKey = getPrimaryKey(model);
-    const as = getAlias(targetModel, options);
-
-    registerAssociation(
-        model,
-        as,
-        'hasOne',
-        targetModel,
-        foreignKey.name,
-        referenceKey,
-    );
-};
-
-const hasMany = ({ model, args, sqlite }) => {
-    const [target, options = {}] = args;
-
-    const targetModel = getTargetModel(sqlite, target);
-
-    const foreignKey = getForeignKeyName(model, options);
-    const referenceKey = getPrimaryKey(model);
-    const as = getAlias(targetModel, options);
-
-    registerAssociation(
-        model,
-        as,
-        'hasMany',
-        targetModel,
-        foreignKey.name,
-        referenceKey,
-    );
-};
-
-const belongsToMany = ({ model, args, sqlite }) => {
-    const [target, options = {}] = args;
+    if (!options.through) {
+        throw new Error(
+            `belongsToMany("${target}") requires a "through" model`,
+        );
+    }
 
     const throughModel = getTargetModel(sqlite, options.through);
     const targetModel = getTargetModel(sqlite, target);
@@ -118,29 +79,77 @@ const belongsToMany = ({ model, args, sqlite }) => {
     const targetForeignKey =
         options.otherKey || `${targetModel.modelName.toLowerCase()}Id`;
 
+    // Source -> Through
     hasMany({
         model,
         sqlite,
-        args: [throughModel, { foreignKey: sourceForeignKey }],
+        args: [
+            throughModel,
+            {
+                as: options.throughAs || throughModel.modelName.toLowerCase(),
+                foreignKey: sourceForeignKey,
+            },
+        ],
     });
 
+    // Target -> Through
     hasMany({
         model: targetModel,
         sqlite,
-        args: [throughModel, { foreignKey: targetForeignKey }],
+        args: [
+            throughModel,
+            {
+                as:
+                    options.inverseThroughAs ||
+                    throughModel.modelName.toLowerCase(),
+                foreignKey: targetForeignKey,
+            },
+        ],
     });
 
+    // Through -> Source
     belongsTo({
         model: throughModel,
         sqlite,
-        args: [model, { foreignKey: sourceForeignKey }],
+        args: [
+            model,
+            {
+                foreignKey: sourceForeignKey,
+            },
+        ],
     });
 
+    // Through -> Target
     belongsTo({
         model: throughModel,
         sqlite,
-        args: [targetModel, { foreignKey: targetForeignKey }],
+        args: [
+            targetModel,
+            {
+                foreignKey: targetForeignKey,
+            },
+        ],
     });
+
+    // // Source -> Target (virtual association)
+    // registerAssociation(
+    //     model,
+    //     getAlias(targetModel, options),
+    //     'belongsToMany',
+    //     targetModel,
+    //     sourceForeignKey,
+    //     getPrimaryKey(targetModel),
+    // );
+
+    // // Target -> Source (inverse virtual association)
+    // registerAssociation(
+    //     targetModel,
+    //     options.inverseAs || model.modelName.toLowerCase(),
+    //     'belongsToMany',
+    //     model,
+    //     targetForeignKey,
+    //     getPrimaryKey(model),
+    // );
 };
 
-export default { belongsTo, belongsToMany, hasOne, hasMany };
+export default { belongsTo, hasOne, hasMany, belongsToMany };

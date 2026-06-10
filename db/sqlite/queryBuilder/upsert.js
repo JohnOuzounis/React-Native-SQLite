@@ -2,7 +2,7 @@ import {
     generateWhereClause,
     getConflictColumns,
     generateConflictClause,
-} from '../utils';
+} from '../utils/query-utils';
 import generateInsert from './insert';
 
 const generateUpsert = (model, data, options, sqlite) => {
@@ -20,11 +20,11 @@ const generateUpsert = (model, data, options, sqlite) => {
     const conflictColumns = getConflictColumns(
         Object.keys(filteredAttributes).length === 0
             ? attributes
-            : filteredAttributes
+            : filteredAttributes,
     );
 
     const updatableColumns = Object.keys(data).filter(
-        key => !conflictColumns.includes(key)
+        key => !conflictColumns.includes(key),
     );
 
     const updateValues = [
@@ -34,7 +34,7 @@ const generateUpsert = (model, data, options, sqlite) => {
 
     const insertQuery = generateInsert(model, columns, sqlite).replace(
         /;$/,
-        ''
+        '',
     );
     const conflictClause = generateConflictClause(conflictColumns);
     const whereClause = generateWhereClause(model.modelName, where);

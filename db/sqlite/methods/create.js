@@ -1,6 +1,6 @@
 import logger from '../logger/logger';
 import builder from '../queryBuilder/index';
-import { getLastInsertedRow } from '../utils';
+import { getLastInsertedRow } from '../utils/query-utils';
 
 async function init(params) {
     const { model, sqlite } = params;

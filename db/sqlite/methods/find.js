@@ -1,6 +1,6 @@
 import logger from '../logger/logger';
 import builder from '../queryBuilder';
-import { getGroupedResults } from '../utils';
+import { getGroupedResults } from '../utils/result-utils';
 
 const findAll = async params => {
     const { model, args, sqlite } = params;
