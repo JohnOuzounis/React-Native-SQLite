@@ -1,4 +1,8 @@
-import { getPrimaryKey, getAssociation } from './association-utils';
+import {
+    getPrimaryKey,
+    getAssociation,
+    isMultiAssociation,
+} from './association-utils';
 
 const getSelectedPrimaryKeyAlias = (model, attrs) => {
     const pk = getPrimaryKey(model);
@@ -92,12 +96,8 @@ const processIncludes = (parentNode, row, includes, parentModel, sqlite) => {
 
             childMap.set(childId, childNode);
 
-            attachChild(
-                parentNode,
-                associationName,
-                childNode,
-                association.isMultiAssociation,
-            );
+            const isMany = isMultiAssociation(association.associationType);
+            attachChild(parentNode, associationName, childNode, isMany);
         }
 
         if (nested.length) {

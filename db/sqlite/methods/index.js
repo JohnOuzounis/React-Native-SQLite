@@ -9,7 +9,6 @@ const methodsObjs = [
 
 export default {
     addMethods: (model, sqlite) => {
-        console.log(methodsObjs);
         methodsObjs.forEach(methods => {
             Object.entries(methods).forEach(([name, func]) => {
                 model[name] = async function (...args) {
