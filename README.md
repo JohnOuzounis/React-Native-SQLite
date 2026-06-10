@@ -2,16 +2,16 @@
 
 ## Table of Contents
 
-[Introduction](#introduction)
-[Prerequisites](#prerequisites)
-[Install](#add-react-native-sqlite-to-your-project)
-[How-to-Use](#1-creating-an-sqlite-instance)
-[Datatypes](#available-data-types)
-[Operators](#using-operators)
-[Associations](#3-adding-associations)
-[DbProvider](#5-using-the-dbprovider-context)
-[Queries](#additional-model-methods)
-[Migrations](#migrations)
+- [Introduction](#introduction)
+- [Prerequisites](#prerequisites)
+- [Install](#add-react-native-sqlite-to-your-project)
+- [How-to-Use](#1-creating-an-sqlite-instance)
+- [Datatypes](#available-data-types)
+- [Operators](#using-operators)
+- [Associations](#3-adding-associations)
+- [DbProvider](#5-using-the-dbprovider-context)
+- [Queries](#additional-model-methods)
+- [Migrations](#migrations)
 
 ## Introduction
 
@@ -169,7 +169,7 @@ Post.belongsTo('User', {
 - **`belongsTo`**: Defines a many-to-one relationship or a one-to-one relationship.
     - `target`: A string representing the name of the target model to which the source model belongs.
     - `options`: An object that contains options for defining the relationship.
-        - `foreignKey`: An object specifying the foreign key settings. If not provided, the system will automatically use the format tableNameId.
+        - `foreignKey`: A `string` or an `object` specifying the foreign key settings. If not provided, the system will automatically use the format `tablenameId`.
             - `name`: A string to specify a custom name for the foreign key column.
         - `as`: A string representing the name of the alias used in join queries
 
@@ -182,12 +182,21 @@ Post.belongsTo('User', {
 });
 ```
 
-- **`belongsToMany`**: DO NOT USE THIS ONE
+- **`belongsToMany`**: Defines a many-to-many relationship.
+    - `target`: A string representing the name of the target model.
+    - `options`: An object that contains options for defining the relationship.
+        - `through`: A string representing the junction table used to connect the two models.
+        - `foreignKey`: A string or an object specifying the foreign key settings for the source model.
+            - `name`: A string to specify a custom name for the foreign key column.
+        - `otherKey`: A string or an object specifying the foreign key settings for the target model.
 
-### Association Options
-
-- **`foreignKey`**: The foreign key in the target model.
-- **`as`**: A string representing the name of the alias used in join queries
+```javascript
+User.belongsToMany('Role', {
+    through: 'UserRoles',
+    foreignKey: 'userId',
+    otherKey: 'roleId',
+});
+```
 
 ## 4. Synchronizing Models
 
