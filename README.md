@@ -1,90 +1,89 @@
-# React Native SQLite ORM Tool Documentation
+# React Native SQLite ORM
 
-## Table of Contents
+A lightweight SQLite ORM for React Native with support for:
 
-- [Introduction](#introduction)
-- [Prerequisites](#prerequisites)
-- [Install](#add-react-native-sqlite-to-your-project)
-- [How-to-Use](#1-creating-an-sqlite-instance)
-- [Datatypes](#available-data-types)
-- [Operators](#using-operators)
-- [Associations](#3-adding-associations)
-- [DbProvider](#5-using-the-dbprovider-context)
-- [Queries](#additional-model-methods)
-- [Migrations](#migrations)
+- Models
+- Associations
+- Query builders
+- Nested includes
+- Aliases
+- Migrations
+- Seeders
+- Aggregate functions
+- React context integration
 
-## Introduction
+Built on top of Expo SQLite with a Sequelize-inspired API.
 
-This tool provides an ORM-like interface for handling SQLite database queries in React Native applications using JavaScript objects. It simplifies database operations by allowing you to define models, set up associations, and perform queries in an intuitive way.
+---
 
-This guide covers the following steps:
+# Features
 
-1. Creating an SQLite instance
-2. Defining models
-3. Adding associations
-4. Using the `DbProvider` context
+- Simple model definitions
+- SQLite query abstraction
+- Associations (`belongsTo`, `hasMany`, `belongsToMany`)
+- Nested eager loading
+- Aliased joins
+- Aggregate functions
+- Migrations & seeders
+- React Native friendly
+- Expo SQLite support
 
-## Prerequisites
+---
 
-- **React Native application**
-- **Expo SQLite**: Ensure you have the `expo-sqlite` package installed.
+# Installation
 
-## Add React-Native-SQLite to your project
-
-In your `package.json`, add the GitHub repository as a dependency:
-
-```javascript
-{
-  "dependencies": {
-    "React-Native-SQLite": "git+https://github.com/JohnOuzounis/React-Native-SQLite.git"
-  }
-}
-```
-
-or install it
+## Install from GitHub
 
 ```bash
 npm install https://github.com/JohnOuzounis/React-Native-SQLite.git
 ```
 
-## 1. Creating an SQLite Instance
+or add it manually to your `package.json`
 
-First, create an instance of the SQLite helper and connect to your database.
+```json
+{
+    "dependencies": {
+        "react-native-sqlite": "git+https://github.com/JohnOuzounis/React-Native-SQLite.git"
+    }
+}
+```
 
-### Import the SQLite Helper
+---
+
+# Prerequisites
+
+- React Native application
+- Expo SQLite
+
+Install Expo SQLite:
+
+```bash
+npx expo install expo-sqlite
+```
+
+---
+
+# Getting Started
+
+## Create SQLite Instance
 
 ```javascript
 import { createSqlite } from 'react-native-sqlite';
-```
 
-### Create and Connect the SQLite Instance
-
-```javascript
 const sqlite = createSqlite();
 
 (async () => {
-    await sqlite.connect('my_database_name.db');
+    await sqlite.connect('my_database.db');
 })();
 ```
 
-## 2. Defining Models
+---
 
-Models represent tables in your database. Use the `define` method to create models.
+# Defining Models
 
-### Syntax
+Models represent SQLite tables.
 
-```javascript
-const ModelName = sqlite.define('ModelName', attributes, options);
-```
-
-- **`ModelName`**: String representing the name of your model/table.
-- **`attributes`**: Object defining the columns and their data types.
-- **`options`**: (Optional) Additional model configurations.
-    1. `timestamps`: add `createdAt` and `updatedAt` columns to your table
-    2. `localtime`: timestamps use local timezone instead of UTC
-    3. `paranoid`: add `deletedAt` timestamp
-
-### Example
+## Basic Example
 
 ```javascript
 const User = sqlite.define('User', {
@@ -93,16 +92,19 @@ const User = sqlite.define('User', {
         primaryKey: true,
         autoIncrement: true,
     },
+
     username: {
         type: sqlite.datatypes.STRING,
         unique: true,
         allowNull: false,
     },
+
     email: {
         type: sqlite.datatypes.STRING,
         unique: true,
         allowNull: false,
     },
+
     password: {
         type: sqlite.datatypes.STRING,
         allowNull: false,
@@ -110,20 +112,45 @@ const User = sqlite.define('User', {
 });
 ```
 
-### Available Data Types
+---
 
-The `sqlite.datatypes` object provides various data types:
+# Model Options
 
-- `STRING`
-- `INTEGER`
-- `FLOAT`
-- `BOOLEAN`
-- `DATE`
+| Option       | Description                               |
+| ------------ | ----------------------------------------- |
+| `timestamps` | Adds `createdAt` and `updatedAt`          |
+| `localtime`  | Uses local timezone instead of UTC        |
+| `paranoid`   | Adds soft delete support with `deletedAt` |
 
-You can create an enum using the `check` constraint for example
+Example:
 
 ```javascript
-sqlite.define('Table', {
+sqlite.define('User', attributes, {
+    timestamps: true,
+    paranoid: true,
+});
+```
+
+---
+
+# Available Data Types
+
+| Data Type |
+| --------- |
+| `UUID`    |
+| `STRING`  |
+| `INTEGER` |
+| `FLOAT`   |
+| `BOOLEAN` |
+| `DATE`    |
+| `TEXT`    |
+
+---
+
+# Enum / Check Constraints
+
+```javascript
+sqlite.define('Orders', {
     status: {
         type: sqlite.datatypes.STRING,
         check: ['WAITING', 'COMPLETE'],
@@ -131,64 +158,34 @@ sqlite.define('Table', {
 });
 ```
 
-## 3. Adding Associations
+---
 
-Associations define relationships between models (e.g., one-to-many, many-to-many).
+# Associations
 
-### Example
+Associations define relationships between models.
 
-```javascript
-const Post = sqlite.define('Post', {
-    id: {
-        type: sqlite.datatypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true,
-    },
-    title: {
-        type: sqlite.datatypes.STRING,
-        allowNull: false,
-    },
-    content: {
-        type: sqlite.datatypes.TEXT,
-        allowNull: false,
-    },
-    userId: {
-        type: sqlite.datatypes.INTEGER,
-        allowNull: false,
-    },
-});
+---
 
-// Add associations
-Post.belongsTo('User', {
-    foreignKey: { name: 'userId' },
-});
-```
-
-### Association Methods
-
-- **`belongsTo`**: Defines a many-to-one relationship or a one-to-one relationship.
-    - `target`: A string representing the name of the target model to which the source model belongs.
-    - `options`: An object that contains options for defining the relationship.
-        - `foreignKey`: A `string` or an `object` specifying the foreign key settings. If not provided, the system will automatically use the format `tablenameId`.
-            - `name`: A string to specify a custom name for the foreign key column.
-        - `as`: A string representing the name of the alias used in join queries
+## belongsTo
 
 ```javascript
 Post.belongsTo('User', {
     foreignKey: {
         name: 'userId',
     },
-    as: 'user',
 });
 ```
 
-- **`belongsToMany`**: Defines a many-to-many relationship.
-    - `target`: A string representing the name of the target model.
-    - `options`: An object that contains options for defining the relationship.
-        - `through`: A string representing the junction table used to connect the two models.
-        - `foreignKey`: A string or an object specifying the foreign key settings for the source model.
-            - `name`: A string to specify a custom name for the foreign key column.
-        - `otherKey`: A string or an object specifying the foreign key settings for the target model.
+### Options
+
+| Option       | Description        |
+| ------------ | ------------------ |
+| `foreignKey` | Foreign key column |
+| `as`         | Association alias  |
+
+---
+
+## belongsToMany
 
 ```javascript
 User.belongsToMany('Role', {
@@ -198,47 +195,49 @@ User.belongsToMany('Role', {
 });
 ```
 
-## 4. Synchronizing Models
+### Options
 
-Synchronize your models with the database using the `sync` method.
+| Option       | Description              |
+| ------------ | ------------------------ |
+| `through`    | Junction table           |
+| `foreignKey` | Source model foreign key |
+| `otherKey`   | Target model foreign key |
 
-### Example
+---
+
+# Synchronizing Models
 
 ```javascript
-(async () => {
-    await sqlite.sync();
-})();
+await sqlite.sync();
 ```
 
-This creates the necessary tables and relationships in the database.
+Creates all tables and relationships automatically.
 
-## 5. Using the `DbProvider` Context
+---
 
-Use the `DbProvider` context to make the SQLite instance and models available throughout your React components.
+# DbProvider
 
-### Setting Up `DbProvider`
+Use `DbProvider` to access the database anywhere in your React tree.
+
+---
+
+## Setup
 
 ```javascript
-import React from 'react';
 import { DbProvider } from 'react-native-sqlite/context/DbProvider';
-import { createSqlite } from 'react-native-sqlite';
 
 const createDatabase = async () => {
     const sqlite = createSqlite();
-    await sqlite.connect('my_database_name.db');
 
-    // Define models
-    const User = sqlite.define('User', {
-        /* attributes */
+    await sqlite.connect('my_database.db');
+
+    const User = sqlite.define('User', {});
+    const Post = sqlite.define('Post', {});
+
+    Post.belongsTo('User', {
+        foreignKey: 'userId',
     });
-    const Post = sqlite.define('Post', {
-        /* attributes */
-    });
 
-    // Add associations
-    Post.belongsTo(User, { foreignKey: 'userId' });
-
-    // Synchronize models
     await sqlite.sync();
 
     return sqlite;
@@ -246,313 +245,426 @@ const createDatabase = async () => {
 
 const App = () => (
     <DbProvider createDatabase={createDatabase} fallback={<Loading />}>
-        <YourAppComponents />
+        <YourApp />
     </DbProvider>
 );
 ```
 
-- **`createDatabase`**: Async function that initializes the database.
-- **`fallback`**: Component displayed while the database is loading.
+---
 
-### Accessing the Database with `useDb`
-
-In your components, access the database using the `useDb` hook.
+## useDb Hook
 
 ```javascript
-import React, { useEffect, useState } from 'react';
 import { useDb } from 'react-native-sqlite/context/DbProvider';
 
-const UserList = () => {
+const Users = () => {
     const sqlite = useDb();
-    const [users, setUsers] = useState([]);
 
-    useEffect(() => {
-        const fetchUsers = async () => {
-            const userList = await sqlite.models.User.findAll();
-            setUsers(userList);
-        };
-
-        fetchUsers();
-    }, [sqlite]);
-
-    return (
-        <View>
-            {users.map(user => (
-                <Text key={user.id}>{user.username}</Text>
-            ))}
-        </View>
-    );
+    return null;
 };
 ```
 
-**Note**: Ensure `useDb` is used within a component wrapped by `DbProvider`.
+> `useDb` must be used inside `DbProvider`.
 
-## Additional Model Methods
+---
 
-### CRUD Operations
+# CRUD Operations
 
-- **Create**
+---
 
-    ```javascript
-    await sqlite.models.User.create({
-        username: 'johndoe',
-        email: 'john@example.com',
-        password: 'securepassword',
-    });
-
-    await sqlite.models.User.bulkCreate([
-        {
-            username: 'johndoe',
-            email: 'john@example.com',
-            password: 'securepassword',
-        },
-        {
-            username: 'janedoe',
-            email: 'jane@example.com',
-            password: 'securepassword',
-        },
-    ]);
-    ```
-
-- **Read**
-
-    ```javascript
-    const users = await sqlite.models.User.findAll();
-
-    const user = await sqlite.models.User.findOne({ where: { id: 1 } });
-
-    const user = await sqlite.models.User.findByPk('jane@example.com');
-    ```
-
-- **Update**
-
-    ```javascript
-    await sqlite.models.User.update(
-        { email: 'newemail@example.com' },
-        { where: { id: 1 } },
-    );
-
-    await sqlite.models.User.upsert({ value: 'example' }, { where: { id: 1 } });
-    ```
-
-- **Delete**
-
-    ```javascript
-    await sqlite.models.User.destroy({ where: { id: 1 } });
-    ```
-
-- **Drop**
-
-    ```javascript
-    await sqlite.models.User.drop();
-    ```
-
-- **Aggregate Functions**
-
-Supported aggregate functions:
-
-- `NOW`
-- `COUNT`
-- `SUM`
-- `AVG`
-- `MAX`
-- `MIN`
-- `UPPER`
-- `LOWER`
-- `LENGTH`
-- `DATE`
-- `TIME`
-- `STRFTIME`
+## Create
 
 ```javascript
-const User = sqlite.define('User', {
-  age: {
-    type: sqlite.datatypes.INTEGER
-  },
-  salary: {
-    type: sqlite.datatypes.INTEGER
-  }
-});
-
-sqlite.models.User.findAll({
-  attributes:[
-    [sqlite.fn('AVG', 'salary'), 'avg_salary']
-  ]
-  where: {
-    age: { [Op.gt]: 18 }
-  },
+await sqlite.models.User.create({
+    username: 'john',
+    email: 'john@example.com',
 });
 ```
 
-### Query Options
-
-- **`where`**: Object specifying query conditions.
-- **`attributes`**: Array of attributes to retrieve.
-
-    ```javascript
-    const user = await sqlite.models.User.findOne({
-        attributes: [
-            'username',
-            ['phone', 'mobile'], // includes 'phone' with alias 'mobile'
-        ],
-        where: {
-            username: 'test-user',
-        },
-    });
-    ```
-
-- **`include`**: Array of associated models to include.
-  The include parameter allows you to specify associated models to join in queries.
-
-    Each include object may contain:
-    - `model`: The associated model name.
-    - `attributes`: Columns to select from the associated model.
-    - `on`: (Optional) Custom join condition as [parentColumn, childColumn].
-    - `as`: (Optional) Alias for the associated model.
-    - `target`: (Optional) Parent model for the join; defaults to the queried model.
-    - `include`: (Optional) Nested associations.
-
-    Important: When using `include`, the primary key of the root model and every included model must be selected in `attributes` (either directly or with an alias). Primary keys are used internally to group joined rows back into nested objects. Omitting a model's primary key may result in duplicated or incorrectly grouped results.
-
-    Example Usage:
-
-    ```javascript
-    const orders = await Order.findAll({
-        attributes: [['Orders.id', 'id'], 'orderDate', 'total'],
-        include: [
-            {
-                model: 'Customers',
-                attributes: [['Customers.id', 'customerId'], 'name', 'email'],
-            },
-        ],
-    });
-    ```
-
-- **`order`**: An array specifying the order in which the results should be returned.
-- **`limit`**: A number that specifies the maximum number of records to return from the query.
-- **`offset`**: A number that specifies the number of records to skip before starting to collect the result set.
-- **`as`**: A string that specifies the name of the column in count query.
-- **`group`**: An array with column names, it is used in count queries
-
-### Using Operators
-
-Use `sqlite.Op` for complex queries.
+### Bulk Create
 
 ```javascript
-db.models.User.findAll({
+await sqlite.models.User.bulkCreate([
+    {
+        username: 'john',
+    },
+    {
+        username: 'jane',
+    },
+]);
+```
+
+---
+
+## Read
+
+```javascript
+await sqlite.models.User.findAll();
+
+await sqlite.models.User.findOne({
     where: {
-        [db.Op.OR]: [{ status: 'active' }, { age: { [Op.gt]: 18 } }],
+        id: 1,
+    },
+});
+
+await sqlite.models.User.findByPk(1);
+```
+
+---
+
+## Update
+
+```javascript
+await sqlite.models.User.update(
+    {
+        email: 'new@email.com',
+    },
+    {
+        where: {
+            id: 1,
+        },
+    },
+);
+```
+
+---
+
+## Upsert
+
+```javascript
+await sqlite.models.User.upsert({
+    id: 1,
+    username: 'john',
+});
+```
+
+---
+
+## Delete
+
+```javascript
+await sqlite.models.User.destroy({
+    where: {
+        id: 1,
     },
 });
 ```
 
-**Available Operators** (from `sqlite.Op`):
+---
 
-- `EQ`: Equal
-- `NE`: Not equal
-- `GT`: Greater than
-- `GTE`: Greater than or equal
-- `LT`: Less than
-- `LTE`: Less than or equal
-- `IN`: In
-- `NOT_IN`: Not in
-- `IS`: (can be used for null check)
-
-## Migrations
-
-Database migrations help you manage and apply changes to your database schema in a structured and version-controlled way. You should define your models and their associations alongside corresponding migration files. Use the `sqlite.migrate` and `sqlite.migrateUndo` methods to execute or undo migrations
-
-### API Reference
-
-The `queryInterface` provides methods for database schema changes such as creating, modifying, and deleting tables, columns, and constraints.
-
-**Available Methods**
-
-- `createTable`
-- `dropTable`
-- `addColumn`
-- `dropColumn`
-- `renameTable`
-- `renameColumn`
-- `bulkCreate`
-- `bulkDelete`
-
-**Unsupported Methods**
-
-- `changeColumn`
-- `addConstraint`
-- `dropConstraint`
-
-    To work around unsupported methods you can do the following in your migration:
-    1. Define a new table with the changed column or new constraints (example: `new_users`)
-    2. copy old table into new (get all `users` and add to `new_users`)
-    3. Drop old table
-    4. Rename new table (`new_users` -> `users`)
-
-### Define migrations
-
-Each migration file should follow a structured format with `up` (apply changes) and `down` (revert changes) methods.
+## Drop Table
 
 ```javascript
-const createUser = {
+await sqlite.models.User.drop();
+```
+
+---
+
+# Query Options
+
+| Option       | Description       |
+| ------------ | ----------------- |
+| `where`      | Query conditions  |
+| `attributes` | Selected columns  |
+| `include`    | Join associations |
+| `order`      | Sorting           |
+| `group`      | Group results     |
+| `limit`      | Maximum rows      |
+| `offset`     | Pagination offset |
+
+---
+
+# Attributes
+
+```javascript
+await sqlite.models.User.findOne({
+    attributes: ['username', ['phone', 'mobile']],
+});
+```
+
+Generated SQL:
+
+```sql
+SELECT
+    username,
+    phone AS mobile
+FROM User;
+```
+
+---
+
+# Include Queries
+
+The `include` option allows eager loading of associated models.
+
+---
+
+## Basic Include
+
+```javascript
+await sqlite.models.Orders.findAll({
+    attributes: [['Orders.id', 'id'], 'total'],
+
+    include: [
+        {
+            model: 'Customers',
+
+            attributes: [['Customers.id', 'customerId'], 'name'],
+        },
+    ],
+});
+```
+
+---
+
+# Aliases (`as`)
+
+Aliases are supported in joins and nested includes.
+
+---
+
+## Define Alias
+
+```javascript
+Post.belongsTo('User', {
+    foreignKey: {
+        name: 'authorId',
+    },
+
+    as: 'author',
+});
+```
+
+---
+
+## Query with Alias
+
+```javascript
+await sqlite.models.Post.findAll({
+    include: [
+        {
+            model: 'User',
+
+            as: 'author',
+
+            attributes: [
+                ['author.id', 'authorId'],
+                ['author.username', 'authorUsername'],
+            ],
+        },
+    ],
+});
+```
+
+---
+
+# Nested Includes
+
+```javascript
+await sqlite.models.Orders.findAll({
+    include: [
+        {
+            model: 'Customers',
+            as: 'customer',
+
+            include: [
+                {
+                    model: 'Addresses',
+                    as: 'address',
+                },
+            ],
+        },
+    ],
+});
+```
+
+---
+
+# Custom Join Conditions
+
+```javascript
+include: [
+    {
+        model: 'Products',
+
+        as: 'products',
+
+        on: ['id', 'categoryId'],
+    },
+];
+```
+
+---
+
+# Aggregate Functions
+
+Supported functions:
+
+| Function   |
+| ---------- |
+| `COUNT`    |
+| `SUM`      |
+| `AVG`      |
+| `MIN`      |
+| `MAX`      |
+| `UPPER`    |
+| `LOWER`    |
+| `LENGTH`   |
+| `DATE`     |
+| `TIME`     |
+| `STRFTIME` |
+| `NOW`      |
+
+Example:
+
+```javascript
+await sqlite.models.User.findAll({
+    attributes: [[sqlite.fn('AVG', 'salary'), 'avgSalary']],
+});
+```
+
+---
+
+# Operators
+
+Use `sqlite.Op` for advanced queries.
+
+```javascript
+await sqlite.models.User.findAll({
+    where: {
+        [sqlite.Op.OR]: [
+            {
+                status: 'active',
+            },
+            {
+                age: {
+                    [sqlite.Op.GT]: 18,
+                },
+            },
+        ],
+    },
+});
+```
+
+---
+
+## Available Operators
+
+| Operator | Description           |
+| -------- | --------------------- |
+| `EQ`     | Equal                 |
+| `NE`     | Not equal             |
+| `GT`     | Greater than          |
+| `GTE`    | Greater than or equal |
+| `LT`     | Less than             |
+| `LTE`    | Less than or equal    |
+| `IN`     | In array              |
+| `NOT_IN` | Not in array          |
+| `IS`     | NULL checks           |
+
+---
+
+# Migrations
+
+Migrations allow version-controlled schema changes.
+
+---
+
+## Run Migrations
+
+```javascript
+await sqlite.migrate(migrations);
+```
+
+---
+
+## Undo Migrations
+
+```javascript
+await sqlite.migrateUndo(migrations);
+```
+
+---
+
+# queryInterface Methods
+
+| Method         |
+| -------------- |
+| `createTable`  |
+| `dropTable`    |
+| `addColumn`    |
+| `dropColumn`   |
+| `renameTable`  |
+| `renameColumn` |
+| `bulkCreate`   |
+| `bulkDelete`   |
+
+---
+
+# Migration Example
+
+```javascript
+const createUsers = {
     name: '001_create_users',
+
     up: async (queryInterface, sqlite) => {
         await queryInterface.createTable('Users', {
             id: {
                 type: sqlite.datatypes.INTEGER,
                 primaryKey: true,
                 autoIncrement: true,
-                allowNull: false,
             },
+
             username: {
                 type: sqlite.datatypes.STRING,
-                allowNull: false,
                 unique: true,
-            },
-            createdAt: {
-                type: sqlite.datatypes.DATE,
-                defaultValue: sqlite.fn('NOW'),
-                allowNull: false,
-            },
-            updatedAt: {
-                type: sqlite.datatypes.DATE,
-                defaultValue: sqlite.fn('NOW'),
-                allowNull: false,
             },
         });
     },
-    down: async (queryInterface, sqlite) => {
+
+    down: async queryInterface => {
         await queryInterface.dropTable('Users');
     },
 };
 ```
 
-### Define seeders
+---
 
-Similar to migrations, you can define seeders for your database using the `sqlite.seed` and `sqlite.seedUndo` methods. Each seeder file should follow a structured format with `up` (apply changes) and `down` (revert changes) methods.
+# Seeders
+
+Seeders allow inserting initial data.
+
+---
+
+## Seeder Example
 
 ```javascript
 const addUsers = {
     name: '001_add_users',
-    up: async (queryInterface, sqlite) => {
-        const data = [
+
+    up: async queryInterface => {
+        await queryInterface.bulkCreate('Users', [
             {
                 username: 'User1',
             },
             {
                 username: 'User2',
             },
-            {
-                username: 'User3',
-            },
-        ];
-
-        await queryInterface.bulkCreate('Users', data);
+        ]);
     },
-    down: async (queryInterface, sqlite) => {
-        await queryInterface.bulkDestoy('Users', {
-            where: { username: ['User1', 'User2', 'User3'] },
+
+    down: async queryInterface => {
+        await queryInterface.bulkDelete('Users', {
+            where: {
+                username: ['User1', 'User2'],
+            },
         });
     },
 };
 ```
+
+---
+
+# License
+
+MIT
