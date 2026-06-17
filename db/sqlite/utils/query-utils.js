@@ -50,7 +50,9 @@ export const generateColumns = (attributes, include) => {
                     const alias = attr[1];
                     return `${func} AS ${alias}`;
                 }
-                return `${joinObj.model}.${attr}`;
+
+                const tableRef = joinObj.as || joinObj.model;
+                return `${tableRef}.${attr}`;
             });
 
             if (joinObj.include) {
@@ -147,7 +149,11 @@ export const generateConflictClause = conflictColumns => {
 export const generateIncludeClause = (modelName, include = [], sqlite) => {
     if (include.length === 0) return '';
 
-    const processInclude = (includeArray, parentModel = modelName) => {
+    const processInclude = (
+        includeArray,
+        parentModel = modelName,
+        parentTableRef = modelName,
+    ) => {
         return includeArray
             .map(joinObj => {
                 const {
@@ -156,7 +162,6 @@ export const generateIncludeClause = (modelName, include = [], sqlite) => {
                     on: joinOn,
                     type = 'INNER',
                     include: nestedInclude = [],
-                    target = parentModel,
                 } = joinObj;
 
                 const association = getAssociation(
@@ -165,11 +170,14 @@ export const generateIncludeClause = (modelName, include = [], sqlite) => {
                     sqlite,
                     as,
                 );
+
                 if (!association) {
                     throw new Error(
                         `Association "${model}" not found on model "${parentModel}"`,
                     );
                 }
+
+                const tableRef = as || association.as || model.toLowerCase();
 
                 let leftSide;
                 let rightSide;
@@ -177,19 +185,19 @@ export const generateIncludeClause = (modelName, include = [], sqlite) => {
                 if (joinOn) {
                     const [leftCol, rightCol] = joinOn;
 
-                    leftSide = `${target}.${leftCol}`;
-                    rightSide = `${model}.${rightCol}`;
+                    leftSide = `${parentTableRef}.${leftCol}`;
+                    rightSide = `${tableRef}.${rightCol}`;
                 } else {
                     switch (association.associationType) {
                         case 'belongsTo':
-                            leftSide = `${target}.${association.foreignKey}`;
-                            rightSide = `${model}.${association.referenceKey}`;
+                            leftSide = `${parentTableRef}.${association.foreignKey}`;
+                            rightSide = `${tableRef}.${association.referenceKey}`;
                             break;
 
                         case 'hasOne':
                         case 'hasMany':
-                            leftSide = `${target}.${association.referenceKey}`;
-                            rightSide = `${model}.${association.foreignKey}`;
+                            leftSide = `${parentTableRef}.${association.referenceKey}`;
+                            rightSide = `${tableRef}.${association.foreignKey}`;
                             break;
 
                         default:
@@ -199,10 +207,14 @@ export const generateIncludeClause = (modelName, include = [], sqlite) => {
                     }
                 }
 
-                let joinClause = ` ${type.toUpperCase()} JOIN ${model} ON ${leftSide} = ${rightSide}`;
+                let joinClause = ` ${type.toUpperCase()} JOIN ${model} ${tableRef} ON ${leftSide} = ${rightSide}`;
 
                 if (nestedInclude.length) {
-                    joinClause += processInclude(nestedInclude, model);
+                    joinClause += processInclude(
+                        nestedInclude,
+                        model,
+                        tableRef,
+                    );
                 }
 
                 return joinClause;
